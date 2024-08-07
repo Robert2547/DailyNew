@@ -1,13 +1,11 @@
 #app/__init__.py
 from fastapi import FastAPI
 
-from .services import article, summarizer
 
 
 app = FastAPI()
 
-# Import these after creating the app instance
-from .api.endpoints import router
+from .api import router
 
 # Include the router
 app.include_router(router)

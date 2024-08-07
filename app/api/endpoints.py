@@ -4,12 +4,9 @@ from cachetools import TTLCache
 import time
 import logging
 
-from app.db.base import get_db
-
-from ..ml_models.request_models import SummarizeRequest
-from ..services.article import get_content
-from ..services.summarizer import load_model, summarize_content
-from ..utils.helpers import get_cache_key
+from app.services import get_content, load_model, summarize_content
+from app.utils.helpers import get_cache_key
+from app.ml_models.request_models import SummarizeRequest
 
 router = APIRouter()
 

@@ -32,6 +32,8 @@ def create_user(db: Session, user: UserCreate):
     Returns:
         User: The created user object.
     """
+    if get_user(db, user.email): # Check if user already exists
+        return None
     hashed_password = pwd_context.hash(user.password)
     db_user = User(email=user.email, hashed_password=hashed_password)
     db.add(db_user)
