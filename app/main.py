@@ -1,6 +1,6 @@
 from fastapi.middleware.cors import CORSMiddleware
 from app import app
-from .config import HOST, PORT
+from .core.config import HOST, PORT
 
 # Configure CORS
 app.add_middleware(

@@ -7,7 +7,7 @@ import time
 import asyncio
 from typing import List, Tuple
 
-from .config import MODEL_NAME
+from ..core.config import MODEL_NAME
 
 def load_model() -> Tuple[AutoTokenizer, AutoModelForSeq2SeqLM]:
     """

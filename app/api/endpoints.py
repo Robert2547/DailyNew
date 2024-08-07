@@ -4,10 +4,10 @@ from cachetools import TTLCache
 import time
 import logging
 
-from .models.request_models import SummarizeRequest
-from .article import get_content
-from .summarizer import load_model, summarize_content
-from .utils import get_cache_key
+from ..ml_models.request_models import SummarizeRequest
+from ..services.article import get_content
+from ..services.summarizer import load_model, summarize_content
+from ..utils.helpers import get_cache_key
 
 router = APIRouter()
 

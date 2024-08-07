@@ -7,7 +7,7 @@ import aiohttp
 from fastapi import HTTPException
 import validators
 
-from backend.models import SummarizeRequest
+from app.ml_models import SummarizeRequest
 
 async def fetch_article_content(url: str) -> str:
     """
