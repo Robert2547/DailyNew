@@ -1,8 +1,10 @@
-# app/routes.py
-from fastapi import APIRouter, HTTPException, Request
+# app/api/endpoint.py
+from fastapi import APIRouter, Depends, HTTPException, Request
 from cachetools import TTLCache
 import time
 import logging
+
+from app.db.base import get_db
 
 from ..ml_models.request_models import SummarizeRequest
 from ..services.article import get_content

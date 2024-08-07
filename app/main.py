@@ -1,6 +1,16 @@
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app import app
-from .core.config import HOST, PORT
+from app.core.config import settings
+from app.db.base import Base, engine
+from app.api.endpoints import router
+
+app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+# Include the router
+app.include_router(router)
 
 # Configure CORS
 app.add_middleware(
@@ -14,4 +24,4 @@ app.add_middleware(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host=HOST, port=PORT)
+    uvicorn.run(app, host=settings.HOST, port=settings.PORT)

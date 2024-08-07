@@ -1,6 +1,8 @@
+#app/__init__.py
 from fastapi import FastAPI
 
 from .services import article, summarizer
+
 
 app = FastAPI()
 
