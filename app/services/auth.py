@@ -1,9 +1,7 @@
-import secrets
 from sqlalchemy.orm import Session
 from app.models.user import User
 from passlib.context import CryptContext
 from app.schemas.user import UserCreate
-import os
 import logging
 from fastapi import HTTPException, status
 from datetime import timedelta, datetime
@@ -13,6 +11,8 @@ from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
 from pydantic.networks import EmailStr
 from app.core import settings
+import uuid
+from app.models.user import TokenInfo
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -68,8 +68,6 @@ def create_user(db: Session, user: UserCreate):
         hashed_password = pwd_context.hash(user.password)
         db_user = User(email=user.email, hashed_password=hashed_password)
         db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
         logger.info(f"User created successfully: {user.email}")
         return db_user
     except HTTPException:
@@ -82,6 +80,35 @@ def create_user(db: Session, user: UserCreate):
             detail="Error creating user",
         )
 
+def create_token(db: Session, user: User):
+    """
+    Create a new access token for the user in the database.
+
+    Args:
+        db (Session): The database session.
+        user (User): The user object.
+
+    Returns:
+        TokenInfo: The created token object.
+    """
+    try:
+        token_info = TokenInfo(
+            id=str(uuid.uuid4()),
+            user_id=user.id,
+            access_token=create_access_token(data={"sub": user.email}),
+            expires_at=datetime.utcnow() + timedelta(minutes=30),
+        )
+        db.add(token_info)
+        logger.info(f"Token created successfully for user: {user.email}")
+        return token_info
+    except Exception as e:
+        logger.error(f"Error creating token: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating token",
+        )
+    
 
 def authenticate_user(db: Session, email: str, password: str):
     """
@@ -108,7 +135,7 @@ def authenticate_user(db: Session, email: str, password: str):
         )
     return user
 
-
+# Good
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
     Creates a JWT access token for authenticated users.

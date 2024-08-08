@@ -12,7 +12,7 @@ from .auth import (
     get_current_user,
     create_password_reset_token,
     reset_password,
-    create_access_token,
+    create_access_token, create_token
 )
 
 __all__ = [
@@ -31,5 +31,5 @@ __all__ = [
     "get_current_user",
     "create_password_reset_token",
     "reset_password",
-    "create_access_token",
+    "create_access_token", "create_token"
 ]

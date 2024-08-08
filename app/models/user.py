@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -27,3 +27,12 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
 
     articles = relationship("Article", back_populates="author", lazy="dynamic")
+
+
+class TokenInfo(Base):
+    __tablename__ = "token_info"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(Integer, index=True)
+    access_token = Column(String)
+    expires_at = Column(DateTime)
