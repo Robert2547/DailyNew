@@ -4,7 +4,16 @@ This package provides functionality for article content extraction, summarizatio
 
 from .article import get_content, fetch_article_content, extract_article_content
 from .summarizer import load_model, summarize_content
-from .auth import get_user, create_user, authenticate_user
+from .auth import (
+    get_user,
+    create_user,
+    authenticate_user,
+    verify_token,
+    get_current_user,
+    create_password_reset_token,
+    reset_password,
+    create_access_token,
+)
 
 __all__ = [
     # Article module
@@ -18,4 +27,9 @@ __all__ = [
     "get_user",
     "create_user",
     "authenticate_user",
+    "verify_token",
+    "get_current_user",
+    "create_password_reset_token",
+    "reset_password",
+    "create_access_token",
 ]

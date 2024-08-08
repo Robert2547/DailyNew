@@ -10,6 +10,7 @@ from app.ml_models.request_models import SummarizeRequest
 
 router = APIRouter()
 
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
