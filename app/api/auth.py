@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.services.auth import create_user, authenticate_user, create_token
 from fastapi.security import OAuth2PasswordRequestForm
-from app.schemas.user import UserCreate, UserInDB, UserResponse
+from app.schemas.user import UserCreate, UserInDB, UserResponse, UserLogin
 from datetime import timedelta
 from app.services.auth import (
     create_access_token,
@@ -33,7 +33,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
     Raises:
         HTTPException: If a user with the given email already exists.
-        
+
     Returns:
         UserInDB: The created user object.
     """
@@ -63,14 +63,12 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=UserResponse)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
-):
+def login(login_request: UserLogin, db: Session = Depends(get_db)):
     """
     Authenticate a user and log them in.
 
     Args:
-        form_data (OAuth2PasswordRequestForm): The user login credentials.
+        login_request (UserLogin): The user login credentials.
         db (Session, optional): The database session. Defaults to Depends(get_db).
 
     Raises:
@@ -79,13 +77,14 @@ def login(
     Returns:
         returns a UserResponse with the access token and token type.
     """
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(db, login_request.email, login_request.password)
     if not user:  # No user found
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     # Check if the user has a valid token
     token_info = (
         db.query(TokenInfo)
@@ -94,7 +93,7 @@ def login(
         .first()
     )
     if (
-        not token_info or token_info.expires_at < datetime.utcnow()
+        not token_info or token_info.expires_at < datetime.now()
     ):  # No token found or token expired
         token_info = TokenInfo(  # Create a new token
             id=str(uuid.uuid4()),

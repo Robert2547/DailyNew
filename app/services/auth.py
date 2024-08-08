@@ -123,7 +123,7 @@ def authenticate_user(db: Session, email: str, password: str):
         User: The authenticated user object if successful, else None.
     """
     user = get_user(db, email)
-    if not user or not pwd_context.verify(password, user.hashed_password):
+    if not user or not pwd_context.verify(password, user.hashed_password): 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
