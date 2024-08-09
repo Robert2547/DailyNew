@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
 from passlib.context import CryptContext
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserResponse
 import logging
 from fastapi import HTTPException, status
 from datetime import timedelta, datetime
@@ -13,6 +13,10 @@ from pydantic.networks import EmailStr
 from app.core import settings
 import uuid
 from app.models.user import TokenInfo
+from fastapi import Depends
+from fastapi.requests import Request
+from app.db.base import get_db
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +29,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = settings.SECRET_KEY.get_secret_value()
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+
 
 def get_user(db: Session, email: str):
     """
@@ -80,6 +85,7 @@ def create_user(db: Session, user: UserCreate):
             detail="Error creating user",
         )
 
+
 def create_token(db: Session, user: User):
     """
     Create a new access token for the user in the database.
@@ -108,7 +114,7 @@ def create_token(db: Session, user: User):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating token",
         )
-    
+
 
 def authenticate_user(db: Session, email: str, password: str):
     """
@@ -123,7 +129,7 @@ def authenticate_user(db: Session, email: str, password: str):
         User: The authenticated user object if successful, else None.
     """
     user = get_user(db, email)
-    if not user or not pwd_context.verify(password, user.hashed_password): 
+    if not user or not pwd_context.verify(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -134,6 +140,7 @@ def authenticate_user(db: Session, email: str, password: str):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
     return user
+
 
 # Good
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -190,33 +197,66 @@ def verify_token(token: str) -> dict:
         )
 
 
-def get_current_user(db: Session, token: str) -> User:
+# def get_current_user(db: Session, token: str) -> UserResponse:
+#     """
+#     Retrieve the current user from the database using the JWT.
+
+#     Args:
+#         db (Session): The database session.
+#         token (str): The JWT token.
+
+#     Returns:
+#         User: The current user.
+
+#     Raises:
+#         HTTPException: If user retrieval fails.
+#     """
+
+#     try:
+#         payload = verify_token(token)
+#         email: str = payload.get("sub")
+#         user = get_user(db, email)
+#         if user is None:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+#             )
+#         return UserResponse.model_validate(user)
+#     except Exception as e:
+#         logger.error(f"Error getting current user: {e}")
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials"
+#         )
+
+
+def get_current_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Optional[UserResponse]:
     """
-    Retrieve the current user from the database using the JWT.
+    Dependency to retrieve the current user from the JWT token.
 
     Args:
+        request (Request): The current request object.
         db (Session): The database session.
-        token (str): The JWT token.
 
     Returns:
-        User: The current user.
-
-    Raises:
-        HTTPException: If user retrieval fails.
+        Optional[UserResponse]: The current user, or None if the token is invalid.
     """
-    payload = verify_token(token)
-    email: str = payload.get("sub")
-    if email is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-        )
-    user = get_user(db, email)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-        )
-    return user
+    token = request.headers.get("Authorization")
+    if token:
+        try:
+            payload = verify_token(token)
+            email: str = payload.get("sub")
+            user = get_user(db, email)
+            if user:
+                return UserResponse.from_orm(user)
+        except Exception as e:
+            logger.error(f"Error getting current user: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+    return None
 
 
 def create_password_reset_token(db: Session, email: EmailStr) -> str:

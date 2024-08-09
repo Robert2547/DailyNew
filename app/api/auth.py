@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.services.auth import create_user, authenticate_user, create_token
+from app.services.auth import create_user, authenticate_user, create_token, get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from app.schemas.user import UserCreate, UserInDB, UserResponse, UserLogin
 from datetime import timedelta
@@ -14,6 +14,8 @@ from datetime import datetime
 import uuid
 from app.db.base import get_db
 from app.models.user import TokenInfo
+from typing import Optional
+
 
 
 router = APIRouter()
@@ -92,22 +94,58 @@ def login(login_request: UserLogin, db: Session = Depends(get_db)):
         .order_by(TokenInfo.expires_at.desc())
         .first()
     )
-    if (
-        not token_info or token_info.expires_at < datetime.now()
-    ):  # No token found or token expired
-        token_info = TokenInfo(  # Create a new token
-            id=str(uuid.uuid4()),
-            user_id=user.id,
-            access_token=create_access_token(data={"sub": user.email}),
-            expires_at=datetime.utcnow() + timedelta(minutes=30),
-        )
-        db.add(token_info)
+
+    if ( not token_info or token_info.expires_at < datetime.now() ):  # No token found or token expired
+        token_info = create_token(db, user)
         db.commit()
 
     return UserResponse(
         id=user.id, user=user, access_token=token_info.access_token, token_type="bearer"
     )
 
+@router.post("/logout", response_model=UserResponse)
+def logout(
+    current_user: Optional[UserResponse] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Log out a user by invalidating the access token.
+
+    Args:
+        current_user (UserResponse): The current user.
+        db (Session): The database session.
+
+    Returns:
+        UserResponse: The user response with a cleared access token.
+    """
+    try:
+        if current_user and hasattr(current_user, 'db'):
+            token_info = (
+                current_user.db.query(TokenInfo)
+                .filter(TokenInfo.user_id == current_user.id)
+                .order_by(TokenInfo.expires_at.desc())
+                .first()
+            )
+            if token_info:
+                token_info.expires_at = datetime.now()
+                current_user.db.add(token_info)
+                current_user.db.commit()
+        return UserResponse(
+            id=current_user.id,
+            user=current_user,
+            access_token=None,
+            token_type=None,
+        )
+    except AttributeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid current user object",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error logging out: {e}",
+        )
 
 @router.post("/password-reset-request")
 async def request_password_reset(email: str, db: Session = Depends(get_db)):
