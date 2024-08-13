@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.base import Base, engine
-from app.api import router
+from app.api import router as api_router
+from app.services import router as services_router
 
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
 
@@ -10,7 +11,8 @@ app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
 Base.metadata.create_all(bind=engine)
 
 # Include the router
-app.include_router(router)
+app.include_router(api_router)
+app.include_router(services_router)
 
 # Configure CORS
 app.add_middleware(

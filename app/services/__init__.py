@@ -14,8 +14,14 @@ from .auth import (
     reset_password,
     create_access_token, create_token
 )
+from .test import router as test_router
+from fastapi import APIRouter
+
+router = APIRouter()
+router.include_router(test_router, tags=["Test"])
 
 __all__ = [
+    "router",
     # Article module
     "get_content",
     "fetch_article_content",

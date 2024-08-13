@@ -7,15 +7,19 @@ import aiohttp
 from fastapi import HTTPException
 import validators
 
-from app.ml_models import SummarizeRequest
-
 async def fetch_article_content(url: str) -> str:
     """
     Asynchronously fetch the content of an article from a given URL.
     """
+    if not validators.url(url):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+    
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
+            if response.status != 200:
+                raise HTTPException(status_code=response.status, detail="Failed to fetch article content")
             return await response.text()
+
 
 
 def extract_article_content(html_content: str) -> str:
@@ -41,21 +45,12 @@ def extract_article_content(html_content: str) -> str:
             return " ".join(soup.stripped_strings)
 
 
-async def get_content(data: SummarizeRequest) -> str:
+async def get_content(url: str) -> str:
     """
-    Get content from either URL or text in the request data.
+    Get content from a URL.
     """
-    if data.url:
-        if not validators.url(data.url):
-            raise HTTPException(status_code=400, detail="Invalid URL")
-        html_content = await fetch_article_content(data.url)
-        content = extract_article_content(html_content)
-        if not content.strip():
-            raise HTTPException(
-                status_code=400, detail="Failed to extract content from URL"
-            )
-    elif data.text:
-        content = data.text
-    else:
-        raise HTTPException(status_code=400, detail="Neither URL nor text provided")
+    html_content = await fetch_article_content(url)
+    content = extract_article_content(html_content)
+    if not content.strip():
+        raise HTTPException(status_code=400, detail="Failed to extract content from URL")
     return content
