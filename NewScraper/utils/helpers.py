@@ -2,25 +2,32 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta
 import pytz
+
+
 def save_to_json(data, output_file: Path):
     if not output_file.exists():
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         with output_file.open("w", encoding="utf-8") as f:
             json.dump([], f)
 
     with output_file.open("r", encoding="utf-8") as f:
         existing_data = json.load(f)
 
-    existing_data.append(data)
+    if isinstance(data, list):
+        existing_data.extend(data)
+    else:
+        existing_data.append(data)
 
     with output_file.open("w", encoding="utf-8") as f:
         json.dump(existing_data, f, ensure_ascii=False, indent=2)
 
+
 def is_within_last_24_hours(time_str):
     try:
         now = datetime.now()
-        if 'ago' not in time_str.lower():
+        if "ago" not in time_str.lower():
             return False
-        
+
         time_parts = time_str.split()
         number = int(time_parts[0])
         unit = time_parts[1]

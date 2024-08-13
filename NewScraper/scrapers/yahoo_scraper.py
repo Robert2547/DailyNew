@@ -5,6 +5,7 @@ from utils import is_within_last_24_hours
 import requests
 import concurrent.futures
 from newspaper import Article
+from utils import timing
 
 
 class YahooScraper(BaseScraper):
@@ -34,7 +35,6 @@ class YahooScraper(BaseScraper):
                         content["urls"].append(urljoin(main_url, url))
                         content["dates"].append(date)
                         content["paragraphs"].append("")
-        
         return content
 
     def extract_article_details(self, url):
@@ -46,4 +46,21 @@ class YahooScraper(BaseScraper):
     def get_news_content(self, url):
         response = requests.get(url)
         soup = self.parse_html(response.content)
-        return self.extract_news_content(soup, url)
+        try:
+            news_content = self.extract_news_content(soup, url)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_url = {executor.submit(self.extract_article_details, article_url): article_url for article_url in news_content["urls"]}
+                
+                for future in concurrent.futures.as_completed(future_to_url):
+                    url = future_to_url[future]
+                    try:
+                        article_text = future.result()
+                        index = news_content["urls"].index(url)
+                        news_content["paragraphs"][index] = article_text
+                    except Exception as exc:
+                        print(f"{url} generated an exception: {exc}")
+            return news_content
+        except Exception as e:
+            print(f"Error extracting news content: {e}")
+            news_content = {"titles": [], "urls": [], "dates": [], "paragraphs": []}
+            return news_content
