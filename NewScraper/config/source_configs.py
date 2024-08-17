@@ -11,7 +11,7 @@ HEADERS = {
 
 SOURCES = {
     "reuters": {
-        "base_url": "https://www.reuters.com/markets/companies",
+        "base_url": "https://www.reuters.com/markets/companies/{ticker}.O/profile",
         "headers": HEADERS,
         "company": {
             "titles": ".media-story-card__headline__tFMEu[href]",
@@ -32,10 +32,6 @@ SOURCES = {
             "titles": "h3.clamp.yf-1044anq",
             "urls": "a.subtle-link.fin-size-small.titles.noUnderline.yf-13p9sh2",
             "dates": "div.publishing.font-condensed.yf-da5pxu",
-        },
-        "article": {
-            "title": "h1[data-testid='Heading']",
-            "date": "time > span:nth-child(2)",
             "paragraphs": "div[data-testid*='paragraph-']",
         },
     },

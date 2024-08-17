@@ -1,52 +1,51 @@
 import os
 from pathlib import Path
-import concurrent.futures
 from utils import save_to_json, timing
-import json, cProfile
-import time
 from config import SCRAPEOPS_API_KEY
-import pstats
-from io import StringIO
-from scrapers import YahooScraper, ReutersScraper
+from scrapers import YahooScraper, ReutersScraper, MarketWatchScraper
+from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from config import SOURCES, HEADERS
+import requests
+from bs4 import BeautifulSoup
 
 
 @timing
 def main():
+    ticker = "AAPL"  # Example ticker
 
-    # TODO: Make URL dynamic
-    # URL = "https://www.reuters.com/markets/companies/AAPL.O/profile"
-    URL = "https://finance.yahoo.com/quote/AVGO/"
-    # scraper = ReutersScraper(SCRAPEOPS_API_KEY)
-    scraper = YahooScraper(SCRAPEOPS_API_KEY)
+    # TODO: Implement parallel scraping using threads or asyncio
 
-    news_content = scraper.get_news_content(URL)
+    # Initialize scrapers
+    # yahoo_scraper = YahooScraper(SOURCES["yahooFinance"])
+    # marketwatch_scraper = MarketWatchScraper(SOURCES["marketWatch"])
+    # reuters_scraper = ReutersScraper(SOURCES["reuters"])
 
-    def article_generator():
-        for title, url, date in zip(
-            news_content["titles"], news_content["urls"], news_content["dates"]
-        ):
-            yield url
 
-    output_folder = Path("output")
-    output_folder.mkdir(exist_ok=True)
-    output_file = output_folder / "articles.json"
-    articles = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_url = {
-            executor.submit(scraper.fetch_and_extract_article, url): url
-            for url in article_generator()
-        }
+    # Get news content
+    # yahoo_news = yahoo_scraper.get_news_content(ticker)
+    # marketwatch_news = marketwatch_scraper.get_news_content(ticker)
+    # reuters_news = reuters_scraper.fetch_and_extract_article_ap(ticker)
 
-        for future in concurrent.futures.as_completed(future_to_url):
-            url = future_to_url[future]
-            try:
-                article_details = future.result()
-                articles.append(article_details)
-            except Exception as exc:
-                print(f"{url} generated an exception: {exc}")
-    save_to_json(articles, output_file)
+    
+    # Process the news content as needed
+    # print("Yahoo Finance News:")
+    # for title, url, date in zip(yahoo_news["titles"], yahoo_news["urls"], yahoo_news["dates"]):
+    #     print(f"Title: {title}")
+    #     print(f"Datetime: {date}")
+    #     print("---")
 
+    # print("\n\nMarketWatch News:")
+    # for title, url, date in zip(marketwatch_news["titles"], marketwatch_news["urls"], marketwatch_news["dates"]):
+    #     print(f"Title: {title}")
+    #     print("---")
+
+    # print("\n\nReuters News:")
+    # for title, url, date in zip(reuters_news["titles"], reuters_news["urls"], reuters_news["dates"]):
+    #     print(f"Title: {title}")
+    #     print(f"Date: {date}")
+    #     print("---")
+    
 
 if __name__ == "__main__":
-
     main()

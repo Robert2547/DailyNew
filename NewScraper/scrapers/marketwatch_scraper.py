@@ -16,7 +16,6 @@ class MarketWatchScraper(BaseScraper):
                 title = title_element.get_text(strip=True)
                 url = url_element.get('href')
                 date = date_element.get_text(strip=True)
-                
                 standardized_date = self.standardize_date(date)
                 if self.is_recent_article(standardized_date):
                     content["titles"].append(title)
