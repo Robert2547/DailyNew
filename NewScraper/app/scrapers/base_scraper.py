@@ -2,11 +2,10 @@ from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
 from utils import timing, get_proxy_response
 import concurrent.futures
-from config import HEADERS, SCRAPEOPS_API_KEY
 from newspaper import Article
-from urllib.parse import urljoin
 from datetime import datetime
 import requests
+from app.core.config import settings  # Import settings instance
 
 
 class BaseScraper(ABC):
@@ -14,7 +13,7 @@ class BaseScraper(ABC):
         self.config = config
         self.base_url = config.get("base_url", "")
         self.headers = config.get("headers", {}) if use_headers else {}
-        self.api_key = SCRAPEOPS_API_KEY
+        self.api_key = settings.SCRAPEOPS_API_KEY
 
     def parse_html(self, content):
         return BeautifulSoup(content, "html.parser")
@@ -50,8 +49,11 @@ class BaseScraper(ABC):
     def get_news_content(self, ticker):
         url = self.get_url(ticker)
         response = requests.get(url, headers=self.headers)
+        # TODO: Fix 401 error for marketplace
+        if response.status_code != 200:
+            print(f"Failed to fetch URL: {response.content}")
+            raise Exception(f"Request failed with status code: {response.status_code}")
         soup = self.parse_html(response.content)
-
         try:
             news_content = self.extract_news_content(soup, url)
             self.fetch_article_contents(news_content)
@@ -80,27 +82,32 @@ class BaseScraper(ABC):
 
     # Same as fetch_article_contents but uses the SCRAPEOPS API, instead of Newspaper3k
     def fetch_article_contents_api(self, news_content):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_url = {
-                executor.submit(
-                    self.fetch_and_extract_single_article, article_url
-                ): article_url
-                for article_url in news_content["urls"]
-            }
+        try:
 
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    article_text = future.result()
-                    index = news_content["urls"].index(url)
-                    news_content["paragraphs"][index] = article_text
-                except Exception as exc:
-                    print(f"{url} generated an exception: {exc}")
-                    news_content["paragraphs"][
-                        index
-                    ] = ""  # Set empty string for failed fetches
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_url = {
+                    executor.submit(
+                        self.fetch_and_extract_single_article, article_url
+                    ): article_url
+                    for article_url in news_content["urls"]
+                }
 
-        return news_content
+                for future in concurrent.futures.as_completed(future_to_url):
+                    url = future_to_url[future]
+                    try:
+                        article_text = future.result()
+                        index = news_content["urls"].index(url)
+                        news_content["paragraphs"][index] = article_text
+                    except Exception as exc:
+                        print(f"{url} generated an exception: {exc}")
+                        news_content["paragraphs"][
+                            index
+                        ] = ""  # Set empty string for failed fetches
+
+            return news_content
+        except Exception as e:
+            print(f"Error in fetch_article_contents_api: {e}")
+            return {"titles": [], "urls": [], "dates": [], "paragraphs": []}
 
     # Fetches and extracts the article content for a single URL using the SCRAPEOPS API
     def fetch_and_extract_single_article(self, url):
@@ -108,9 +115,11 @@ class BaseScraper(ABC):
             response = get_proxy_response(url, self.api_key)
             if response.status_code != 200:
                 raise Exception(f"Failed to fetch URL: {url}")
-            soup = self.parse_html(response.content)
+
+            soup = self.parse_html(response.text)
             article_details = self.extract_article_details(soup)
-            return article_details.get("paragraphs", "")
+            paragraphs = article_details.get("paragraphs", "")
+            return paragraphs
         except Exception as e:
             print(f"Error fetching and extracting single article content: {e}")
             return ""

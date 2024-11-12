@@ -2,15 +2,16 @@ from scrapers.base_scraper import BaseScraper
 from datetime import datetime, timedelta
 
 class MarketWatchScraper(BaseScraper):
-    def __init__(self, config):
-        super().__init__(config)
-
+    def __init__(self, config, use_headers=True):
+        super().__init__(config, use_headers)
+    
     def extract_news_content(self, soup, main_url):
         content = {"titles": [], "urls": [], "dates": [], "paragraphs": []}
         title_elements = soup.select(self.config["company"]["titles"])
         url_elements = soup.select(self.config["company"]["urls"])
         date_elements = soup.select(self.config["company"]["dates"])
         
+
         for title_element, url_element, date_element in zip(title_elements, url_elements, date_elements):
             if title_element and url_element:
                 title = title_element.get_text(strip=True)

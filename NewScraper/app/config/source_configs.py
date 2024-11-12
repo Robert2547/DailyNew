@@ -28,10 +28,10 @@ SOURCES = {
         "base_url": "https://finance.yahoo.com/quote/{ticker}",
         "headers": HEADERS,
         "company": {
-            "sections": "section.container.sz-small.block.yf-1044anq.responsive.hideImageSmScreen",
-            "titles": "h3.clamp.yf-1044anq",
-            "urls": "a.subtle-link.fin-size-small.titles.noUnderline.yf-13p9sh2",
-            "dates": "div.publishing.font-condensed.yf-da5pxu",
+            "section": "#tabpanel-news > div > section",
+            "titles": "section > div > a > h3",
+            "urls": "section > div > a",
+            "dates": "div.publishing",
             "paragraphs": "div[data-testid*='paragraph-']",
         },
     },
@@ -43,6 +43,7 @@ SOURCES = {
             "urls": "h3.article__headline a.link",
             "dates": "span.article__timestamp",
         },
+        "article": {},  # TODO: Problem with MarketWatch is that the article link to many different news sources
     },
     # Add more sources as needed
 }
