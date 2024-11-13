@@ -4,8 +4,8 @@ News service implementation
 from fastapi import BackgroundTasks
 from app.models.schemas import NewsResponse, NewsArticle
 from app.services.cache import CacheService
-from scrapers import YahooScraper, ReutersScraper
-from config import SOURCES
+from app.scrapers import YahooScraper, ReutersScraper
+from app.config.source_configs import SOURCES
 from typing import List
 import logging
 from concurrent.futures import ThreadPoolExecutor

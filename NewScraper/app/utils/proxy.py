@@ -1,6 +1,6 @@
 import requests
 from urllib.parse import urlencode
-from utils import timing
+from app.utils import timing
 
 def get_proxy_response(url, api_key):
     proxy_params = {

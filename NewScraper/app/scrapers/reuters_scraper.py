@@ -1,6 +1,6 @@
 from urllib.parse import urljoin
-from scrapers import BaseScraper
-from utils import timing, get_proxy_response
+from app.scrapers import BaseScraper
+from app.utils import timing, get_proxy_response
 
 class ReutersScraper(BaseScraper):
     def __init__(self, config, use_headers=False):

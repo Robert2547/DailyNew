@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
-from utils import timing, get_proxy_response
+from app.utils import timing, get_proxy_response
 import concurrent.futures
 from newspaper import Article
 from datetime import datetime
