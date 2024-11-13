@@ -1,13 +1,12 @@
 """
 Core configuration settings for the FastAPI application.
-Loads and validates environment variables.
 """
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 class Settings(BaseSettings):
@@ -23,6 +22,12 @@ class Settings(BaseSettings):
     # CORS Settings
     ALLOWED_ORIGINS: list = ["*"]
 
+    # Optional Redis Settings
+    USE_REDIS: bool = False  # Set to True if you want to use Redis
+    REDIS_HOST: str = "localhost"  # Only used if USE_REDIS is True
+    REDIS_PORT: int = 6379
+    CACHE_EXPIRATION: int = 300  # 5 minutes
+
     class Config:
         case_sensitive = True
 
@@ -33,11 +38,6 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """
-    Create and cache settings instance.
-    Returns:
-        Settings: Application settings
-    """
     return Settings()
 
 # Create a settings instance
