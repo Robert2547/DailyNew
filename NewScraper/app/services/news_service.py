@@ -85,9 +85,11 @@ class NewsService:
                 if source_name == "Reuters":
                     logger.debug(f"Using API method for {source_name}")
                     news = scraper.fetch_and_extract_article_api(ticker)
+                    print("\nLENGTH OF REUTERS: ", len(news["titles"]))
                 else:
                     logger.debug(f"Using standard method for {source_name}")
                     news = scraper.get_news_content(ticker)
+                    print("\nLENGTH OF YAHOO: ", len(news["titles"]))
                 
                 if news and news.get("titles"):
                     source_articles = [

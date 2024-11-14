@@ -13,7 +13,8 @@ class ReutersScraper(BaseScraper):
     def extract_news_content(self, soup, main_url):
         selectors = self.config["company"]
         content = {"titles": [], "urls": [], "dates": [], "paragraphs": []}
-
+        print("ReutersScraper extract_news_content")
+        print("Length of selectors: ", len(selectors))
         for key, selector in selectors.items():
             elements = soup.select(selector)
             if key == "urls":

@@ -127,8 +127,10 @@ class BaseScraper(ABC):
     @timing
     def fetch_and_extract_article_api(self, ticker):
         try:
+            print("\nFetching article content using API")
             url = self.get_url(ticker)
             response = get_proxy_response(url, self.api_key)
+            print("\nRESPONSE: ", response.content)
             if response.status_code != 200:
                 raise Exception(f"Failed to fetch URL: {url}")
             soup = self.parse_html(response.content)

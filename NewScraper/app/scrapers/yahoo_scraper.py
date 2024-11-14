@@ -51,7 +51,7 @@ class YahooScraper(BaseScraper):
         if parent_section:
             # Get all news item divs
             news_items = parent_section.find_all('div', recursive=False)
-            print("Length of news items: ", len(news_items))
+            print("YahooScraper length of news items: ", len(news_items))
             
             for i, item in enumerate(news_items, 1):
                 try:
