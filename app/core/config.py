@@ -1,26 +1,24 @@
 """
 Configuration settings for the summarization service.
 """
-
-import os
 from pydantic_settings import BaseSettings
-from pydantic import PostgresDsn, AnyUrl, SecretStr, Field
-
-MODEL_NAME = os.getenv("MODEL_NAME", "sshleifer/distilbart-cnn-12-6")
-
+from pydantic import AnyUrl, SecretStr, Field
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Daily Summarizer"
     PROJECT_VERSION: str = "1.0.0"
+    
+    # Service URLs
+    AUTH_SERVICE_URL: AnyUrl  # URL for the auth microservice
     DATABASE_URL: AnyUrl
+    
+    # API Settings
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-
-    # JWT settings
-    SECRET_KEY: SecretStr
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-
+    
+    # Model Settings
+    MODEL_NAME: str = "sshleifer/distilbart-cnn-12-6"
+    
     # Debug mode
     DEBUG: bool = Field(default=False)
 
@@ -28,6 +26,5 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
-
 
 settings = Settings()
