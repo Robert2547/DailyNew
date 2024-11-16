@@ -31,7 +31,7 @@ class UserInDBBase(UserBase):
     class Config:
         from_attributes = True
 
-class User(UserInDBBase):
+class UserResponse(UserInDBBase):
     """Schema for user responses."""
     pass
 

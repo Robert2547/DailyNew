@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # Create SQLAlchemy engine
 engine = create_engine(
     str(settings.DATABASE_URL),
-    pool_size=5,
+    pool_size=5, 
     max_overflow=10,
     pool_timeout=30,
     pool_recycle=1800,

@@ -1,10 +1,7 @@
-version: '3.8'
-
 services:
-  # Auth Service and DB
   auth_service:
     build: 
-      context: ./auth_service
+      context: .
     ports:
       - "${AUTH_SERVICE_PORT}:8001"
     environment:
@@ -20,9 +17,9 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - auth_db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data    # Changed volume name here
     ports:
       - "${AUTH_DB_PORT}:5432"
 
 volumes:
-  user_db_data:
+  postgres_data: {}    # Properly defined volume here

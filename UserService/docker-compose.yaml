@@ -3,7 +3,7 @@ version: '3.8'
 services:
   user_service:
     build: 
-      context: ./user_service
+      context: .
     ports:
       - "${USER_SERVICE_PORT}:8003"
     environment:

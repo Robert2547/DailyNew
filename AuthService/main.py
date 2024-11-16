@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from app.core.config import settings
 import uvicorn
-from app.api.v1 import auth
+from app.api.v1.endpoint import auth
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

@@ -38,6 +38,7 @@ def signup(
     db.add(user)
     db.commit()
     db.refresh(user)
+    logger.info(f"User created successfully: {user}")
     return user
 
 
@@ -58,8 +59,8 @@ def login(
             detail="Incorrect email or password",
         )
 
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    token = security.create_access_token(user.email, expires_delta=access_token_expires)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES) # Access token expiration time (30 minutes)
+    token = security.create_access_token(user.email, expires_delta=access_token_expires) # Create access token with expiration time
 
     # Create token info record
     token_info = TokenInfo(
@@ -70,6 +71,8 @@ def login(
     )
     db.add(token_info)
     db.commit()
+
+    logger.info(f"User logged in successfully: {user}")
 
     return {
         "access_token": token,

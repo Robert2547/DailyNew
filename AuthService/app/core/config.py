@@ -9,10 +9,13 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Auth Service"
     VERSION: str = "1.0.0"
     
+    # Environment
+    DEBUG: bool = False  # Added DEBUG setting with default False
+    
     # Security
     SECRET_KEY: SecretStr
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 # 30 minutes
     
     # Database
     DATABASE_URL: PostgresDsn
