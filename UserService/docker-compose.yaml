@@ -2,23 +2,28 @@ version: '3.8'
 
 services:
   user_service:
-    build: .
+    build: 
+      context: ./user_service
     ports:
-      - "8003:8003"
+      - "${USER_SERVICE_PORT}:8003"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/user_db
+      - DATABASE_URL=postgresql://${USER_DB_USER}:${USER_DB_PASSWORD}@user_db:5432/${USER_DB_NAME}
       - AUTH_SERVICE_URL=http://auth_service:8001
     depends_on:
-      - db
+      - user_db
+      - auth_service
       
-  db:
+  user_db:
     image: postgres:13
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=user_db
+      - POSTGRES_DB=${USER_DB_NAME}
+      - POSTGRES_USER=${USER_DB_USER}
+      - POSTGRES_PASSWORD=${USER_DB_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - user_db_data:/var/lib/postgresql/data
+    ports:
+      - "${USER_DB_PORT}:5432"
+      
 volumes:
-  postgres_data:
+  auth_db_data:
+  user_db_data:
