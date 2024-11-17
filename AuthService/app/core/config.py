@@ -1,27 +1,22 @@
 from pydantic_settings import BaseSettings
-from pydantic import PostgresDsn, SecretStr
+from pydantic import PostgresDsn, AnyUrl
 
 class Settings(BaseSettings):
-    """Application configuration."""
-    
-    # API Settings
-    API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Auth Service"
     VERSION: str = "1.0.0"
-    
-    # Environment
-    DEBUG: bool = False  # Added DEBUG setting with default False
-    
-    # Security
-    SECRET_KEY: SecretStr
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 # 30 minutes
     
     # Database
     DATABASE_URL: PostgresDsn
     
+    # JWT
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    # Service URLs
+    USER_SERVICE_URL: AnyUrl
+    
     class Config:
-        case_sensitive = True
         env_file = ".env"
 
 settings = Settings()
