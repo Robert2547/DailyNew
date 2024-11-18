@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import uuid
 import logging
 from app.core.config import settings
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ class AuthService:
         }
 
     @staticmethod
-    async def get_user_by_email(db: Session, email: str) -> User | None:
+    async def get_user_by_email(db: Session, email: str) -> Optional[User]:
         """Get user by email."""
         return db.query(User).filter(User.email == email).first()
 

@@ -4,9 +4,14 @@ from pydantic import PostgresDsn, AnyUrl
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Auth Service"
     VERSION: str = "1.0.0"
+
+    # API Settings
+    API_V1_STR: str = "/api/v1"  # Added this line
     
     # Database
     DATABASE_URL: PostgresDsn
+
+    DEBUG: bool = False
     
     # JWT
     SECRET_KEY: str

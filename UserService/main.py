@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
 from app.api.v1.endpoints import profiles
 from contextlib import asynccontextmanager
 from app.db.base import Base, engine
 import logging
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

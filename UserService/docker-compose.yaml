@@ -5,13 +5,14 @@ services:
     build: 
       context: .
     ports:
-      - "${USER_SERVICE_PORT}:8003"
+      - "${USER_SERVICE_PORT}:8002"
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@user_db:5432/${USER_DB_NAME}
       - AUTH_SERVICE_URL=http://auth_service:8001
     depends_on:
       - user_db
-      - auth_service
+    networks:
+      - app_network
       
   user_db:
     image: postgres:13
@@ -22,8 +23,14 @@ services:
     volumes:
       - user_db_data:/var/lib/postgresql/data
     ports:
-      - "${USER_DB_PORT}:5432"
-      
+      - "5435:5433"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    name: app_network    # Uses the same named network
+    external: true      # Indicates this network already exists
+
 volumes:
-  auth_db_data:
-  user_db_data:
+  user_db_data: {}

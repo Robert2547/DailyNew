@@ -1,31 +1,21 @@
-version: '3.8'
 
 services:
   auth_service:
     extends:
-      file: ./auth_service/docker-compose.yaml
+      file: ./AuthService/docker-compose.yml
       service: auth_service
-    depends_on:
-      - auth_db
-
-  auth_db:
-    extends:
-      file: ./auth_service/docker-compose.yaml
-      service: auth_db
-
+    networks:
+      - microservices_network
+      
   user_service:
     extends:
-      file: ./user_service/docker-compose.yaml
+      file: ./UserService/docker-compose.yml
       service: user_service
+    networks:
+      - microservices_network
     depends_on:
-      - user_db
       - auth_service
 
-  user_db:
-    extends:
-      file: ./user_service/docker-compose.yaml
-      service: user_db
-
-volumes:
-  auth_db_data:
-  user_db_data:
+networks:
+  microservices_network:
+    driver: bridge

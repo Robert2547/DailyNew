@@ -34,11 +34,15 @@ async def signup(
     # Create user profile in UserService
     try:
         async with httpx.AsyncClient() as client:
+            # Make HTTP request to UserService
             profile_response = await client.post(
-                f"{settings.USER_SERVICE_URL}/api/v1/profiles/",
-                json={"auth_user_id": auth_user.id, "email": auth_user.email},
+                f"{settings.USER_SERVICE_URL}/api/v1/profiles/", # Call UserService
+                json={
+                    "auth_user_id": auth_user.id,  # Link profile to auth user
+                    "email": auth_user.email,
+                },
             )
-            if profile_response.status_code != 201:
+            if profile_response.status_code != 201: # Profile creation failed
                 # Rollback auth user creation if profile creation fails
                 await AuthService.delete_user(db, auth_user.id)
                 raise HTTPException(

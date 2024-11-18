@@ -7,8 +7,11 @@ services:
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@auth_db:5432/${AUTH_DB_NAME}
       - SECRET_KEY=${SECRET_KEY}
+      - USER_SERVICE_URL=http://user_service:8002
     depends_on:
       - auth_db
+    networks:
+      - app_network
       
   auth_db:
     image: postgres:13
@@ -17,9 +20,16 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data    # Changed volume name here
+      - postgres_data:/var/lib/postgresql/data
     ports:
-      - "${AUTH_DB_PORT}:5432"
+      - "5434:5432"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    name: app_network    # This creates a named network that can be shared
+    driver: bridge
 
 volumes:
-  postgres_data: {}    # Properly defined volume here
+  postgres_data: {}
