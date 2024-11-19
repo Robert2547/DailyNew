@@ -1,0 +1,38 @@
+# docker-compose.test.yml
+
+services:
+  auth_db_test:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=auth_test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5436:5432"  # Different port from your main auth_db
+    networks:
+      - test_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d auth_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user_db_test:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=user_test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5437:5432"  # Different port from your main user_db
+    networks:
+      - test_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d user_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  test_network:
+    driver: bridge
