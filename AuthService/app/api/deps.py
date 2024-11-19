@@ -5,29 +5,26 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.core.config import settings
-from app.db.base import SessionLocal
 from app.core.security import verify_token
 from app.models.user import User
+from app.db.base import init_db
 import logging
 
 logger = logging.getLogger(__name__)
 
+# Initialize database on module import
+init_db()
+from app.db.base import SessionLocal
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
-
 def get_db() -> Generator:
-    """
-    Database session dependency.
-
-    Yields:
-        Session: SQLAlchemy database session
-    """
+    """Database session dependency."""
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
 
 async def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
