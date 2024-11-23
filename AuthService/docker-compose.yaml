@@ -26,9 +26,21 @@ services:
     networks:
       - app_network
 
+  # Add test database service
+  test_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=auth_test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5436:5432"  # Different port from production
+    networks:
+      - app_network
+
 networks:
   app_network:
-    name: app_network    # This creates a named network that can be shared
+    name: app_network
     driver: bridge
 
 volumes:
