@@ -19,7 +19,9 @@ def setup_test_env():
         "AUTH_DB_NAME": "auth_test_db",
         "AUTH_DB_PORT": "5436",
         "POSTGRES_HOST": "localhost",
-        "USER_SERVICE_URL": "http://user_service:8002"
+        "USER_SERVICE_URL": "http://user_service:8002",
+        "SECRET_KEY": "test-secret-key-123",  
+        "ALGORITHM": "HS256"
     })
     
     # Reinitialize database with test settings
@@ -49,12 +51,8 @@ def db_session(test_db):
     engine = create_engine(test_db)
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.rollback()
-        db.close()
+    with TestingSessionLocal() as session:
+        yield session
 
 @pytest.fixture(scope="function")
 def client(db_session):

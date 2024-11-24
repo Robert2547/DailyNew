@@ -3,6 +3,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
 import os
+from pydantic import SecretStr
 
 class Settings(BaseSettings):
     # Project info
@@ -31,6 +32,9 @@ class Settings(BaseSettings):
 
     # Database URL (constructed from components)
     DATABASE_URL: Optional[str] = None
+
+    SECRET_KEY: SecretStr
+    ALGORITHM: str = "HS256"
 
     @property
     def get_database_url(self) -> str:
