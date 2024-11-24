@@ -1,3 +1,4 @@
+# app/tests/integration/test_login.py
 import pytest
 from app.core.config import settings
 from app.models.user import User, TokenInfo
@@ -6,17 +7,25 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-@pytest.fixture(scope="function")
+@pytest.fixture(autouse=True)
+def clear_tables(db_session):
+    """Clear tables before each test."""
+    # Clear tables in correct order due to foreign key constraints
+    db_session.query(TokenInfo).delete()
+    db_session.query(User).delete()
+    db_session.commit()
+
+@pytest.fixture
 def test_credentials():
-    """Return test user credentials instead of User object."""
+    """Return test user credentials."""
     return {
         "email": "test@example.com",
         "password": "TestPassword123!"
     }
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def test_db_user(db_session, test_credentials):
-    """Create test user in database."""
+    """Create and return a test user."""
     user = User(
         email=test_credentials["email"],
         hashed_password=get_password_hash(test_credentials["password"]),
@@ -24,6 +33,10 @@ def test_db_user(db_session, test_credentials):
     )
     db_session.add(user)
     db_session.commit()
+    
+    # Get fresh instance
+    db_user = db_session.query(User).filter(User.email == test_credentials["email"]).first()
+    return db_user
 
 def test_login_success(client, db_session, test_credentials, test_db_user):
     """Test successful login."""
@@ -38,126 +51,113 @@ def test_login_success(client, db_session, test_credentials, test_db_user):
         headers={"Content-Type": "application/x-www-form-urlencoded"}
     )
 
-    # Basic assertions for response
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
 
-    # Verify token in database with a new query
+    # Verify token in database
     db_token = db_session.query(TokenInfo)\
         .join(User, User.id == TokenInfo.user_id)\
         .filter(User.email == test_credentials["email"])\
         .first()
     
-    assert db_token is not None, "Token not found in database"
+    assert db_token is not None
     assert db_token.access_token == data["access_token"]
 
-# def test_login_wrong_password(client, test_user):
-#     """Test login with wrong password."""
-#     login_data = {
-#         "username": "test@example.com",
-#         "password": "WrongPassword123!"
-#     }
+def test_login_wrong_password(client, test_credentials, test_db_user):
+    """Test login with wrong password."""
+    login_data = {
+        "username": test_credentials["email"],
+        "password": "WrongPassword123!"
+    }
 
-#     response = client.post(
-#         f"{settings.API_V1_STR}/auth/login",
-#         data=login_data,
-#         headers={"Content-Type": "application/x-www-form-urlencoded"}
-#     )
+    response = client.post(
+        f"{settings.API_V1_STR}/auth/login",
+        data=login_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
 
-#     assert response.status_code == 401
-#     assert response.json()["detail"] == "Incorrect email or password"
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Incorrect email or password"
 
-# def test_login_nonexistent_user(client):
-#     """Test login with non-existent user."""
-#     login_data = {
-#         "username": "nonexistent@example.com",
-#         "password": "TestPassword123!"
-#     }
+def test_login_nonexistent_user(client):
+    """Test login with non-existent user."""
+    login_data = {
+        "username": "nonexistent@example.com",
+        "password": "TestPassword123!"
+    }
 
-#     response = client.post(
-#         f"{settings.API_V1_STR}/auth/login",
-#         data=login_data,
-#         headers={"Content-Type": "application/x-www-form-urlencoded"}
-#     )
+    response = client.post(
+        f"{settings.API_V1_STR}/auth/login",
+        data=login_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
 
-#     assert response.status_code == 401
-#     assert response.json()["detail"] == "Incorrect email or password"
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Incorrect email or password"
 
-# def test_login_inactive_user(client, test_user, db_session):
-#     """Test login with inactive user."""
-#     # Deactivate user
-#     test_user.is_active = False
-#     db_session.commit()
+def test_verify_token(client, db_session, test_credentials, test_db_user):
+    """Test token verification after login."""
+    # First, let's debug the login process
+    login_data = {
+        "username": test_credentials["email"],
+        "password": test_credentials["password"]
+    }
 
-#     login_data = {
-#         "username": "test@example.com",
-#         "password": "TestPassword123!"
-#     }
+    print("\nDebug login process:")
+    print(f"Login data: {login_data}")
+    
+    # Get token
+    login_response = client.post(
+        f"{settings.API_V1_STR}/auth/login",
+        data=login_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
 
-#     response = client.post(
-#         f"{settings.API_V1_STR}/auth/login",
-#         data=login_data,
-#         headers={"Content-Type": "application/x-www-form-urlencoded"}
-#     )
+    print(f"Login response status: {login_response.status_code}")
+    print(f"Login response body: {login_response.json()}")
 
-#     assert response.status_code == 401
-#     assert response.json()["detail"] == "Incorrect email or password"
+    # Verify login was successful
+    assert login_response.status_code == 200
+    token = login_response.json()["access_token"]
 
-# def test_verify_token(client, db_session, test_credentials, test_db_user):
-#     """Test token verification after login."""
-#     # First get the user from database for comparison
-#     user = db_session.query(User).filter(
-#         User.email == test_credentials["email"]
-#     ).first()
-#     assert user is not None, "Test user not found in database"
+    print("\nDebug token verification:")
+    print(f"Token: {token}")
+    
+    # Test token verification
+    verify_response = client.post(
+        f"{settings.API_V1_STR}/auth/verify-token",
+        headers={"Authorization": f"Bearer {token}"}
+    )
 
-#     # Login to get token
-#     login_data = {
-#         "username": test_credentials["email"],
-#         "password": test_credentials["password"]
-#     }
+    print(f"Verify response status: {verify_response.status_code}")
+    print(f"Verify response body: {verify_response.json()}")
 
-#     login_response = client.post(
-#         f"{settings.API_V1_STR}/auth/login",
-#         data=login_data,
-#         headers={"Content-Type": "application/x-www-form-urlencoded"}
-#     )
+    # For debugging, let's check the actual user in the database
+    current_user = db_session.query(User).filter(
+        User.email == test_credentials["email"]
+    ).first()
+    print(f"\nCurrent user in DB:")
+    print(f"ID: {current_user.id}")
+    print(f"Email: {current_user.email}")
+    print(f"Is active: {current_user.is_active}")
 
-#     assert login_response.status_code == 200
-#     token = login_response.json()["access_token"]
+    assert verify_response.status_code == 200
 
-#     # Test token verification
-#     verify_response = client.post(
-#         f"{settings.API_V1_STR}/auth/verify-token",
-#         headers={"Authorization": f"Bearer {token}"}
-#     )
+def test_verify_invalid_token(client):
+    """Test verification with invalid token."""
+    response = client.post(
+        f"{settings.API_V1_STR}/auth/verify-token",
+        headers={"Authorization": "Bearer invalid_token"}
+    )
 
-#     print(f"\nVerify response status: {verify_response.status_code}")
-#     print(f"Verify response body: {verify_response.json()}")
+    assert response.status_code == 401
+    assert "Could not validate credentials" in response.json()["detail"]
 
-#     assert verify_response.status_code == 200
-#     user_data = verify_response.json()
+def test_verify_missing_token(client):
+    """Test verification without token."""
+    response = client.post(f"{settings.API_V1_STR}/auth/verify-token")
 
-#     # Compare with fresh user data from database
-#     assert user_data["email"] == user.email
-#     assert user_data["id"] == user.id
-#     assert user_data["is_active"] == user.is_active
-
-# def test_verify_invalid_token(client):
-#     """Test verification with invalid token."""
-#     response = client.post(
-#         f"{settings.API_V1_STR}/auth/verify-token",
-#         headers={"Authorization": "Bearer invalid_token"}
-#     )
-
-#     assert response.status_code == 401
-#     assert "Could not validate credentials" in response.json()["detail"]
-
-# def test_verify_missing_token(client):
-#     """Test verification without token."""
-#     response = client.post(f"{settings.API_V1_STR}/auth/verify-token")
-
-#     assert response.status_code == 401
-#     assert response.json()["detail"] == "Not authenticated"
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
