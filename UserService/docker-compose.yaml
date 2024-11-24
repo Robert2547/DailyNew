@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   user_service:
@@ -23,7 +22,19 @@ services:
     volumes:
       - user_db_data:/var/lib/postgresql/data
     ports:
-      - "5435:5433"
+      - "5433:5432"
+    networks:
+      - app_network
+
+# Add test database service
+  test_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=user_test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5437:5432"  # Different port from production
     networks:
       - app_network
 
