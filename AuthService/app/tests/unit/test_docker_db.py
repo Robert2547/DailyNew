@@ -4,37 +4,29 @@ from sqlalchemy import create_engine, text
 
 def test_docker_test_db_running():
     """Test that Docker test database container is running and accessible."""
-    # Get Docker client
     client = docker.from_env()
-    
-    # Check if test_db container is running
     containers = client.containers.list()
+    
+    # Check for either local docker-compose name or GitHub Actions service name
     test_db_running = any(
-        'test_db' in container.name  # More flexible matching
+        'test_db' in container.name or 
+        'postgres' in container.image.tags[0]
         for container in containers
     )
     
-    # Add debugging information
+    # For debugging
     if not test_db_running:
-        container_names = [container.name for container in containers]
-        print(f"Available containers: {container_names}")
-    
+        container_info = [(container.name, container.image.tags) for container in containers]
+        print(f"Available containers: {container_info}")
+        
     assert test_db_running, "Test database container is not running"
 
 def test_docker_test_db_connection(test_db):
     """Test connection to Docker test database."""
-    try:
-        # Create engine
-        engine = create_engine(test_db)
-        
-        # Try a simple query
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT 1")).scalar()
-            
-        assert result == 1, "Database query failed"
-        
-    except Exception as e:
-        pytest.fail(f"Failed to connect to Docker test database: {str(e)}")
+    engine = create_engine(test_db)
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT 1")).scalar()
+        assert result == 1
 
 def test_docker_test_db_credentials(test_db):
     """Test that Docker test database credentials are correct."""
