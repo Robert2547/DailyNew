@@ -24,12 +24,10 @@ def test_docker_test_db_running():
     assert test_db_running, "Test database container is not running"
 
 
-def test_docker_test_db_connection(test_db):
+def test_docker_test_db_connection(db_session):  # Changed from test_db to db_session
     """Test connection to Docker test database."""
-    engine = create_engine(test_db)
-    with engine.connect() as conn:
-        result = conn.execute(text("SELECT 1")).scalar()
-        assert result == 1
+    result = db_session.execute(text("SELECT 1")).scalar()  # Use the session directly
+    assert result == 1
 
 
 def test_docker_test_db_credentials(setup_test_env):
