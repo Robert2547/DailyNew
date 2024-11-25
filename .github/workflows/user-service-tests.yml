@@ -1,0 +1,61 @@
+name: UserService Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "UserService/**"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "UserService/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      test_db:
+        image: postgres:13
+        env:
+          POSTGRES_DB: user_test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5437:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: ./UserService
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio httpx
+
+      - name: Run Tests
+        working-directory: ./UserService
+        env:
+          TESTING: "true"
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          POSTGRES_HOST: localhost
+          USER_DB_NAME: user_test_db
+          USER_DB_PORT: "5437"
+          AUTH_SERVICE_URL: "http://auth_service:8001"
+          AUTH_SERVICE_PORT: "8001"
+          USER_SERVICE_PORT: "8002"
+          SECRET_KEY: "test-secret-key-123"
+        run: |
+          pytest -v --cov=app
