@@ -56,3 +56,13 @@ jobs:
           AUTH_DB_NAME: auth_test_db
         run: |
           pytest -v --cov=app
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v1
+
+      - name: Install dependencies
+        working-directory: ./UserService
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio httpx docker
