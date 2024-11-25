@@ -1,5 +1,5 @@
+# app/db/base.py
 
-"""Database configuration and session management."""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import logging
@@ -16,7 +16,11 @@ SessionLocal = None
 
 def get_database_url():
     """Get database URL based on environment."""
-    from app.core.config import settings  # Import here to avoid circular import
+    if os.getenv("TESTING", "").lower() == "true":
+        logger.info("Using test database URL")
+        return "postgresql://test_user:test_password@localhost:5437/user_test_db"
+    
+    from app.core.config import settings
     return settings.get_database_url()
 
 def init_db():
@@ -26,15 +30,11 @@ def init_db():
     database_url = get_database_url()
     logger.info(f"Initializing database with URL: {database_url}")
     
-    engine = create_engine(
-        database_url,
-        pool_size=5,
-        max_overflow=10,
-        pool_timeout=30,
-        pool_recycle=1800,
-    )
-    
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    if engine is None:
+        engine = create_engine(database_url)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        
+    return engine
 
 def get_db():
     """Dependency for getting database session."""
@@ -46,7 +46,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-# Don't initialize immediately if in testing mode
-if not os.getenv("TESTING", "false").lower() == "true":
-    init_db()

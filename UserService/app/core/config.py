@@ -1,7 +1,6 @@
+
 from pydantic_settings import BaseSettings
-from typing import Optional
 import os
-from pydantic import PostgresDsn
 
 class Settings(BaseSettings):
     # Project info
@@ -12,42 +11,34 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8002
 
-    # Database settings
-    DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
+    # Set defaults based on environment
+    DB_USER: str = os.getenv("DB_USER", "summarizeruser" if not os.getenv("TESTING") else "test_user")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "123456" if not os.getenv("TESTING") else "test_password")
     POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
-    USER_DB_NAME: str = os.getenv("USER_DB_NAME", "user_db")
-    USER_DB_PORT: str = os.getenv("USER_DB_PORT", "5433")
+    USER_DB_NAME: str = os.getenv("USER_DB_NAME", "user_db" if not os.getenv("TESTING") else "user_test_db")
+    USER_DB_PORT: str = os.getenv("USER_DB_PORT", "5433" if not os.getenv("TESTING") else "5437")
     
-    # Auth Service settings
-    AUTH_SERVICE_PORT: str = os.getenv("AUTH_SERVICE_PORT", "8001")
-    AUTH_DB_NAME: str = os.getenv("AUTH_DB_NAME", "auth_db")
-    AUTH_DB_PORT: str = os.getenv("AUTH_DB_PORT", "5432")
-    USER_SERVICE_PORT: str = os.getenv("USER_SERVICE_PORT", "8002")
-    USER_SERVICE_URL: str = os.getenv("USER_SERVICE_URL", "http://localhost:8002")
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
-    
-    # Service URLs
+    # Service settings
     AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "http://auth_service:8001")
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "allow"  # Allow extra fields from env file
+    AUTH_SERVICE_PORT: str = os.getenv("AUTH_SERVICE_PORT", "8001")
+    USER_SERVICE_PORT: str = os.getenv("USER_SERVICE_PORT", "8002")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
 
     def get_database_url(self) -> str:
         """Get database URL based on environment."""
-        if os.getenv("TESTING", "false").lower() == "true":
-            return (
-                f"postgresql://{os.getenv('DB_USER', 'test_user')}:"
-                f"{os.getenv('DB_PASSWORD', 'test_password')}@"
-                f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
-                f"{os.getenv('USER_DB_PORT', '5437')}/"
-                f"{os.getenv('USER_DB_NAME', 'user_test_db')}"
-            )
+        # Always use test database settings when TESTING is true
+        if os.getenv("TESTING", "").lower() == "true":
+            return "postgresql://test_user:test_password@localhost:5437/user_test_db"
+        
+        # Use production settings otherwise
         return (
             f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@"
             f"{self.POSTGRES_HOST}:{self.USER_DB_PORT}/{self.USER_DB_NAME}"
         )
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+        extra = "allow"
 
 settings = Settings()
