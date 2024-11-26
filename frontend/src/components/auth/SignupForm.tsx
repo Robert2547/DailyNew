@@ -1,63 +1,85 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { SignupInputs } from '../../types';
-import Loader from '../common/Loader/Loader';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
+import { authApi } from "../../api/auth";
+import { SignupCredentials } from "../../types";
 
-const SignupForm: React.FC = () => {
-  const [inputs, setInputs] = useState<SignupInputs>({
-    email: '',
-    password: '',
-    confirmPassword: '',
+export const SignupForm = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<SignupCredentials>({
+    email: "",
+    password: "",
+    password_confirm: "",
   });
-
-  const { loading, signup } = useAuth();
+  const [error, setError] = useState("");
+  const setToken = useAuthStore((state) => state.setToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signup(inputs);
+    try {
+      // Sign up
+      await authApi.signup(formData);
+
+      // Login after successful signup
+      const tokenResponse = await authApi.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      setToken(tokenResponse.access_token);
+      navigate("/profile");
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Signup failed");
+    }
   };
 
-  if (loading) return <Loader />;
-
   return (
-    <div className="form-container">
-      <p className="title">Get started today</p>
-      <form className="form" onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
         <input
           type="email"
-          className="input"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           placeholder="Email"
-          value={inputs.email}
-          onChange={(e) => setInputs({ ...inputs, email: e.target.value })}
+          className="w-full p-2 border rounded"
+          required
         />
+      </div>
+      <div>
         <input
           type="password"
-          className="input"
+          value={formData.password}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           placeholder="Password"
-          value={inputs.password}
-          onChange={(e) => setInputs({ ...inputs, password: e.target.value })}
+          className="w-full p-2 border rounded"
+          required
         />
+      </div>
+      <div>
         <input
           type="password"
-          className="input"
+          value={formData.password_confirm}
+          onChange={(e) =>
+            setFormData({ ...formData, password_confirm: e.target.value })
+          }
           placeholder="Confirm Password"
-          value={inputs.confirmPassword}
-          onChange={(e) => setInputs({ ...inputs, confirmPassword: e.target.value })}
+          className="w-full p-2 border rounded"
+          required
         />
-        <button className="form-btn" disabled={loading}>
-          {loading ? <span className="loading loading-spinner" /> : 'Sign Up'}
-        </button>
-      </form>
-      <p className="sign-up-label">
-        Already have an account?
-        <Link to="/login" className="sign-up-link">
-          Login
-        </Link>
-      </p>
-      {/* Social signup buttons */}
-    </div>
+      </div>
+      {error && (
+        <div className="text-red-500" role="alert">
+          {error}
+        </div>
+      )}
+      <button
+        type="submit"
+        className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Sign Up
+      </button>
+    </form>
   );
 };
-
-export default SignupForm;

@@ -1,20 +1,42 @@
+/**
+ * User interface
+ */
 export interface User {
-    id: string;
-    email: string;
-  }
-  
-  export interface LoginInputs {
-    email: string;
-    password: string;
-  }
-  
-  export interface SignupInputs {
-    email: string;
-    password: string;
-    confirmPassword: string;
-  }
-  
-  export interface AuthContextType {
-    authUser: User | null;
-    setAuthUser: (user: User | null) => void;
-  }
+  id: number;
+  email: string;
+  is_active: boolean;
+}
+
+/**
+ * Profile interface
+ */
+export interface Profile {
+  id: number;
+  auth_user_id: number;
+  email: string;
+}
+
+/**
+ * Login request payload
+ */
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+/**
+ * Registration request payload
+ */
+export interface SignupCredentials {
+  email: string;
+  password: string;
+  password_confirm: string;
+}
+
+/**
+ * Token response from login
+ */
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}

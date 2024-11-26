@@ -1,58 +1,66 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { LoginInputs } from '../../types';
-import { Loader } from '../common/Loader/Loader'; 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
+import { authApi } from "../../api/auth";
+import { LoginCredentials } from "../../types";
 
-const LoginForm: React.FC = () => {
-  const [inputs, setInputs] = useState<LoginInputs>({
-    email: '',
-    password: '',
+export const LoginForm = () => {
+  const navigate = useNavigate();
+  const [credentials, setCredentials] = useState<LoginCredentials>({
+    email: "",
+    password: "",
   });
-
-  const { loading, login } = useAuth();
+  const [error, setError] = useState("");
+  const setToken = useAuthStore((state) => state.setToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(inputs);
+    try {
+      const response = await authApi.login(credentials);
+      setToken(response.access_token);
+      navigate("/profile");
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Login failed");
+    }
   };
 
-  if (loading) return <Loader />;
-
   return (
-    <div className="form-container">
-      <p className="title">Welcome back</p>
-      <form className="form" onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
         <input
-          type="text"
-          className="input"
+          type="email"
+          value={credentials.email}
+          onChange={(e) =>
+            setCredentials({ ...credentials, email: e.target.value })
+          }
           placeholder="Email"
-          value={inputs.email}
-          onChange={(e) => setInputs({ ...inputs, email: e.target.value })}
+          className="w-full p-2 border rounded"
+          required
         />
+      </div>
+      <div>
         <input
           type="password"
-          className="input"
+          value={credentials.password}
+          onChange={(e) =>
+            setCredentials({ ...credentials, password: e.target.value })
+          }
           placeholder="Password"
-          value={inputs.password}
-          onChange={(e) => setInputs({ ...inputs, password: e.target.value })}
+          className="w-full p-2 border rounded"
+          required
         />
-        <p className="page-link">
-          <span className="page-link-label">Forgot Password?</span>
-        </p>
-        <button className="form-btn" disabled={loading}>
-          {loading ? <span className="loading loading-spinner" /> : 'Login'}
-        </button>
-      </form>
-      <p className="sign-up-label">
-        Don't have an account?
-        <Link to="/signup" className="sign-up-link">
-          Sign up
-        </Link>
-      </p>
-      {/* Social login buttons */}
-    </div>
+      </div>
+      {error && (
+        <div className="text-red-500" role="alert">
+          {error}
+        </div>
+      )}
+      <button
+        type="submit"
+        className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Login
+      </button>
+    </form>
   );
 };
-
-export default LoginForm;

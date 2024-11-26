@@ -1,38 +1,42 @@
-import "./App.css";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Home from "./pages/home/Home";
-import Login from "./pages/login/Login";
-import Signup from "";
-import { Toaster } from "react-hot-toast";
-import { useAuthContext } from "./context/AuthContext";
-function App() {
-  const { authUser } = useAuthContext();
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LoginForm } from "./components/auth/LoginForm";
+import { PrivateRoute } from "./components/auth/PrivateRoute";
+import { MainLayout } from "./components/layout/MainLayout";
+import { AuthLayout } from "./components/layout/AuthLayout";
+import { SignupForm } from "./components/auth/SignupForm";
 
+const queryClient = new QueryClient();
+
+function App() {
   return (
-    <div className="p-4 h-screen flex">
-      <Toaster />
-      <div className="flex-grow flex items-center justify-center">
-        {" "}
+    <QueryClientProvider client={queryClient}>
+      <Router>
         <Routes>
-          <Route
-            path="/"
-            element={authUser ? <Home /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/profile"
-            element={authUser ? <Profile /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/login"
-            element={authUser ? <Navigate to="/" /> : <Login />}
-          />
-          <Route
-            path="/signup"
-            element={authUser ? <Navigate to="/" /> : <Signup />}
-          />
+          {/* Auth routes (no navbar) */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/signup" element={<SignupForm />} />
+          </Route>
+
+          {/* Protected routes (with navbar) */}
+          <Route element={<PrivateRoute />}>
+            <Route element={<MainLayout />}>
+              {/* <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/dashboard" element={<DashboardPage />} /> */}
+            </Route>
+          </Route>
+
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
-      </div>
-    </div>
+      </Router>
+    </QueryClientProvider>
   );
 }
 

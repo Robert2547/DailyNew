@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.core.config import settings
-from app.schemas.user import UserCreate, UserResponse, TokenResponse
+from app.schemas.user import UserCreate, UserResponse, TokenResponse, LoginRequest
 from typing import Any
 import logging
 import httpx
@@ -36,13 +36,13 @@ async def signup(
         async with httpx.AsyncClient() as client:
             # Make HTTP request to UserService
             profile_response = await client.post(
-                f"{settings.USER_SERVICE_URL}/api/v1/profiles/", # Call UserService
+                f"{settings.USER_SERVICE_URL}/api/v1/profiles/",  # Call UserService
                 json={
                     "auth_user_id": auth_user.id,  # Link profile to auth user
                     "email": auth_user.email,
                 },
             )
-            if profile_response.status_code != 201: # Profile creation failed
+            if profile_response.status_code != 201:  # Profile creation failed
                 # Rollback auth user creation if profile creation fails
                 await AuthService.delete_user(db, auth_user.id)
                 raise HTTPException(
@@ -60,19 +60,17 @@ async def signup(
     return auth_user
 
 
-@router.post(
-    "/login", response_model=TokenResponse, description="OAuth2 compatible token login"
-)
+@router.post("/login", response_model=TokenResponse)
 async def login(
+    login_data: LoginRequest, 
     db: Session = Depends(deps.get_db),
-    form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> Any:
     """Authenticate user and return token."""
     token_data = await AuthService.authenticate_and_create_token(
-        db, form_data.username, form_data.password
+        db, login_data.email, login_data.password
     )
 
-    logger.info(f"User logged in successfully: {form_data.username}")
+    logger.info(f"User logged in successfully: {login_data.email}")
     return token_data
 
 

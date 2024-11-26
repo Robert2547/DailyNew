@@ -140,3 +140,10 @@ class TokenData(BaseModel):
     email: Optional[str] = Field(None, description="User email from token")
 
     model_config = {"json_schema_extra": {"example": {"email": "user@example.com"}}}
+
+
+class LoginRequest(BaseModel):
+    """Schema for login request"""
+
+    email: EmailStr
+    password: str
