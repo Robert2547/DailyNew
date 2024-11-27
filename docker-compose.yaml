@@ -1,21 +1,84 @@
-
 services:
   auth_service:
-    extends:
-      file: ./AuthService/docker-compose.yml
-      service: auth_service
-    networks:
-      - microservices_network
-      
-  user_service:
-    extends:
-      file: ./UserService/docker-compose.yml
-      service: user_service
-    networks:
-      - microservices_network
+    build: 
+      context: ./AuthService
+    ports:
+      - "${AUTH_SERVICE_PORT}:8001"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@auth_db:5432/${AUTH_DB_NAME}  
+      - SECRET_KEY=${SECRET_KEY}
+      - USER_SERVICE_URL=http://user_service:8002
     depends_on:
-      - auth_service
+      - auth_db
+    networks:
+      - app_network
+
+  user_service:
+    build: 
+      context: ./UserService
+    ports:
+      - "${USER_SERVICE_PORT}:8002"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@user_db:5432/${USER_DB_NAME} 
+      - AUTH_SERVICE_URL=http://auth_service:8001
+    depends_on:
+      - user_db
+    networks:
+      - app_network
+      
+  auth_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=${AUTH_DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5440:5432"  # Changed from 5434
+    networks:
+      - app_network
+
+  user_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=${USER_DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    ports:
+      - "5441:5432"  # Changed from 5433
+    networks:
+      - app_network
+
+  # Test databases
+  auth_test_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=auth_test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5442:5432"  # Changed from 5436
+    networks:
+      - app_network
+
+  user_test_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=user_test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+    ports:
+      - "5443:5432"  # Changed from 5437
+    networks:
+      - app_network
 
 networks:
-  microservices_network:
+  app_network:
     driver: bridge
+
+volumes:
+  postgres_data: {}
+  user_db_data: {}

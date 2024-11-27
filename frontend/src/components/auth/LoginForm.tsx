@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { authApi } from "../../api/auth";
 import { LoginCredentials } from "../../types";
+import toast from "react-hot-toast";
 
 export const LoginForm = () => {
   const navigate = useNavigate();
@@ -15,12 +16,27 @@ export const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const loadingToast = toast.loading("Logging in...");
+
     try {
       const response = await authApi.login(credentials);
       setToken(response.access_token);
-      navigate("/profile");
+
+      // Dismiss loading and show success
+      toast.dismiss(loadingToast);
+      toast.success("Successfully logged in!");
+
+      // Small delay before navigation
+      setTimeout(() => {
+        navigate("/profile");
+      }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Login failed");
+      // Dismiss loading and show error
+      toast.dismiss(loadingToast);
+      const errorMessage = err.response?.data?.detail || "Login failed";
+      toast.error(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -61,6 +77,16 @@ export const LoginForm = () => {
       >
         Login
       </button>
+
+      <div className="text-center">
+        <span className="text-gray-600">Don't have an account? </span>
+        <Link
+          to="/signup"
+          className="text-blue-500 hover:text-blue-700 font-medium"
+        >
+          Sign Up
+        </Link>
+      </div>
     </form>
   );
 };

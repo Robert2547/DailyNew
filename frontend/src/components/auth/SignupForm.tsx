@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { authApi } from "../../api/auth";
 import { SignupCredentials } from "../../types";
+import toast from "react-hot-toast";
+import { checkServiceHealth } from "../../utils/serviceHealth";
 
 export const SignupForm = () => {
   const navigate = useNavigate();
@@ -14,9 +16,41 @@ export const SignupForm = () => {
   const [error, setError] = useState("");
   const setToken = useAuthStore((state) => state.setToken);
 
+  useEffect(() => {
+    const checkServices = async () => {
+      const health = await checkServiceHealth();
+      if (!health.auth || !health.user) {
+        toast.error(health.message);
+        setError(health.message);
+      }
+    };
+
+    checkServices();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check services before attempting signup
+    const health = await checkServiceHealth();
+    if (!health.auth || !health.user) {
+      toast.error(health.message);
+      setError(health.message);
+      return;
+    }
+
+    // Add loading toast
+    const loadingToast = toast.loading("Creating your account...");
+
     try {
+      // Password match validation
+      if (formData.password !== formData.password_confirm) {
+        toast.dismiss(loadingToast);
+        toast.error("Passwords do not match");
+        setError("Passwords do not match");
+        return;
+      }
+
       // Sign up
       await authApi.signup(formData);
 
@@ -27,9 +61,22 @@ export const SignupForm = () => {
       });
 
       setToken(tokenResponse.access_token);
-      navigate("/profile");
+
+      // Dismiss loading and show success
+      toast.dismiss(loadingToast);
+      toast.success("Account created successfully!");
+
+      // Small delay before navigation for better UX
+      setTimeout(() => {
+        navigate("/profile");
+      }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Signup failed");
+      // Dismiss loading and show error
+      toast.dismiss(loadingToast);
+      console.log("Signup ERROR:", err);
+      const errorMessage = err.message || "Signup failed. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -80,6 +127,16 @@ export const SignupForm = () => {
       >
         Sign Up
       </button>
+
+      <div className="text-center">
+        <span className="text-gray-600">Already have an account? </span>
+        <Link
+          to="/login"
+          className="text-blue-500 hover:text-blue-700 font-medium"
+        >
+          Login
+        </Link>
+      </div>
     </form>
   );
 };

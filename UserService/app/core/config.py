@@ -1,6 +1,7 @@
 
 from pydantic_settings import BaseSettings
 import os
+from typing import Optional
 
 class Settings(BaseSettings):
     # Project info
@@ -24,13 +25,16 @@ class Settings(BaseSettings):
     USER_SERVICE_PORT: str = os.getenv("USER_SERVICE_PORT", "8002")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
 
+     # Database URL (constructed from components)
+    DATABASE_URL: Optional[str] = None
+
     def get_database_url(self) -> str:
         """Get database URL based on environment."""
-        # Always use test database settings when TESTING is true
-        if os.getenv("TESTING", "").lower() == "true":
-            return "postgresql://test_user:test_password@localhost:5437/user_test_db"
+        # Use the environment DATABASE_URL if provided
+        if os.getenv("DATABASE_URL"):
+            return os.getenv("DATABASE_URL")
         
-        # Use production settings otherwise
+        # Otherwise construct from components
         return (
             f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@"
             f"{self.POSTGRES_HOST}:{self.USER_DB_PORT}/{self.USER_DB_NAME}"

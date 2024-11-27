@@ -10,12 +10,38 @@ import { PrivateRoute } from "./components/auth/PrivateRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { AuthLayout } from "./components/layout/AuthLayout";
 import { SignupForm } from "./components/auth/SignupForm";
+import { Toaster } from "react-hot-toast"; // Add this
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          success: {
+            duration: 3000,
+            style: {
+              background: "#10B981",
+              color: "white",
+            },
+          },
+          error: {
+            duration: 4000,
+            style: {
+              background: "#EF4444",
+              color: "white",
+            },
+          },
+          loading: {
+            style: {
+              background: "#3B82F6",
+              color: "white",
+            },
+          },
+        }}
+      />
       <Router>
         <Routes>
           {/* Auth routes (no navbar) */}
