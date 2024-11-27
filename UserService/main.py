@@ -8,6 +8,7 @@ from app.db.base import Base, init_db
 import logging
 from app.core.config import settings
 import os
+from app.api.v1.endpoints import system
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(profiles.router, prefix="/api/v1/profiles", tags=["profiles"])
+app.include_router(system.router, prefix=f"{settings.API_V1_STR}/system", tags=["system"])
+
 
 if __name__ == "__main__":
     import uvicorn

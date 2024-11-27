@@ -13,7 +13,7 @@ export const checkServiceHealth = async () => {
   };
 
   try {
-    await axios.get(`${services.auth}/api/v1/health-check`);
+    await axios.get(`${services.auth}/api/v1/system/health-check`);
     results.auth = true;
   } catch (error) {
     results.message = 'Authentication Service is not running. Please start the service.';
@@ -21,7 +21,7 @@ export const checkServiceHealth = async () => {
   }
 
   try {
-    await axios.get(`${services.user}/api/v1/health-check`);
+    await axios.get(`${services.user}/api/v1/system/health-check`);
     results.user = true;
   } catch (error) {
     results.message = 'User Service is not running. Please start the service.';

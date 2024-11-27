@@ -71,12 +71,24 @@ export const SignupForm = () => {
         navigate("/profile");
       }, 1000);
     } catch (err: any) {
-      // Dismiss loading and show error
       toast.dismiss(loadingToast);
-      console.log("Signup ERROR:", err);
-      const errorMessage = err.message || "Signup failed. Please try again.";
-      toast.error(errorMessage);
-      setError(errorMessage);
+      // Handle validation errors array
+      if (Array.isArray(err.response?.data?.detail)) {
+        // Get unique error messages
+        const uniqueErrors = [
+          ...new Set(err.response.data.detail.map((error: any) => error.msg)),
+        ];
+        const errorMessage = uniqueErrors[0]; // Take just the first error
+        toast.error(errorMessage as string);
+        setError(errorMessage as string);
+      } else {
+        const errorMessage: string =
+          typeof err.response?.data?.detail === "string"
+            ? err.response.data.detail
+            : "Signup failed. Please try again.";
+        toast.error(errorMessage);
+        setError(errorMessage);
+      }
     }
   };
 

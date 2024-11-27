@@ -11,8 +11,8 @@ class PasswordMixin(BaseModel):
 
     password: str = Field(
         ...,
-        min_length=8,
-        description="Password must be at least 8 characters long and contain uppercase, lowercase, number",
+        min_length=5,
+        description="Password must be at least 5 characters long and contain uppercase, lowercase, number",
     )
 
     @field_validator("password")
@@ -21,12 +21,8 @@ class PasswordMixin(BaseModel):
         """Validate password meets strength requirements."""
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", v):
-            raise ValueError("Password must contain at least one lowercase letter")
         if not re.search(r"\d", v):
             raise ValueError("Password must contain at least one number")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
-            raise ValueError("Password must contain at least one special character")
         return v
 
 

@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database settings
-    DB_USER: str
-    DB_PASSWORD: str
-    POSTGRES_HOST: str = "localhost"
+    DB_USER: str = os.getenv("DB_USER", "defaultuser")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "defaultpassword")
+    POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
     AUTH_DB_NAME: str = "auth_db"
     AUTH_DB_PORT: str = "5432"
     USER_DB_NAME: str = "user_db"
@@ -39,16 +39,12 @@ class Settings(BaseSettings):
     @property
     def get_database_url(self) -> str:
         """Get database URL based on environment."""
-        if os.getenv("TESTING", "false").lower() == "true":
-            return (
-                f"postgresql://{os.getenv('DB_USER', 'test_user')}:"
-                f"{os.getenv('DB_PASSWORD', 'test_password')}@"
-                f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
-                f"{os.getenv('AUTH_DB_PORT', '5436')}/"
-                f"{os.getenv('AUTH_DB_NAME', 'auth_test_db')}"
-            )
+        # If DATABASE_URL is provided in environment, use it
+        if os.getenv("DATABASE_URL"):
+            return os.getenv("DATABASE_URL")
+            
+        # Otherwise construct from components
         return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.POSTGRES_HOST}:{self.AUTH_DB_PORT}/{self.AUTH_DB_NAME}"
-
     class Config:
         env_file = ".env"
         case_sensitive = True
