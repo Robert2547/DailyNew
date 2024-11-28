@@ -4,6 +4,9 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 import os
 from pydantic import SecretStr
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     # Project info
@@ -35,18 +38,24 @@ class Settings(BaseSettings):
 
     SECRET_KEY: SecretStr
     ALGORITHM: str = "HS256"
-
     @property
     def get_database_url(self) -> str:
         """Get database URL based on environment."""
-        # If DATABASE_URL is provided in environment, use it
-        if os.getenv("DATABASE_URL"):
-            return os.getenv("DATABASE_URL")
-            
-        # Otherwise construct from components
+        # First check if we're in test mode
+        if os.getenv("TESTING", "false").lower() == "true":
+            # Check if we're running in Docker or locally
+            test_host = "test_db" if os.getenv("IN_DOCKER", "false").lower() == "true" else "localhost"
+            test_port = "5432" if os.getenv("IN_DOCKER", "false").lower() == "true" else "5436"
+            url = f"postgresql://test_user:test_password@{test_host}:{test_port}/auth_test_db"
+            logger.info(f"Using test database URL: {url}")
+            return url
+        
+        # Default case: construct URL from settings
         return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.POSTGRES_HOST}:{self.AUTH_DB_PORT}/{self.AUTH_DB_NAME}"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
+
 
 settings = Settings()

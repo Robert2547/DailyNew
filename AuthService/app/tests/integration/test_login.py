@@ -40,14 +40,14 @@ def test_db_user(db_session, test_credentials):
 def test_login_success(client, db_session, test_credentials, test_db_user):
     """Test successful login."""
     login_data = {
-        "username": test_credentials["email"],
+        "email": test_credentials["email"],
         "password": test_credentials["password"]
     }
 
     response = client.post(
         f"{settings.API_V1_STR}/auth/login",
-        data=login_data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        json=login_data,
+        headers={"Content-Type": "application/json"}
     )
 
     assert response.status_code == 200
@@ -67,14 +67,14 @@ def test_login_success(client, db_session, test_credentials, test_db_user):
 def test_login_wrong_password(client, test_credentials, test_db_user):
     """Test login with wrong password."""
     login_data = {
-        "username": test_credentials["email"],
+        "email": test_credentials["email"],
         "password": "WrongPassword123!"
     }
 
     response = client.post(
         f"{settings.API_V1_STR}/auth/login",
-        data=login_data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        json=login_data,
+        headers={"Content-Type": "application/json"}
     )
 
     assert response.status_code == 401
@@ -83,14 +83,14 @@ def test_login_wrong_password(client, test_credentials, test_db_user):
 def test_login_nonexistent_user(client):
     """Test login with non-existent user."""
     login_data = {
-        "username": "nonexistent@example.com",
+        "email": "nonexistent@example.com",
         "password": "TestPassword123!"
     }
 
     response = client.post(
         f"{settings.API_V1_STR}/auth/login",
-        data=login_data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        json=login_data,
+        headers={"Content-Type": "application/json"}
     )
 
     assert response.status_code == 401
@@ -100,7 +100,7 @@ def test_verify_token(client, db_session, test_credentials, test_db_user):
     """Test token verification after login."""
     # First, let's debug the login process
     login_data = {
-        "username": test_credentials["email"],
+        "email": test_credentials["email"],
         "password": test_credentials["password"]
     }
 
@@ -110,8 +110,8 @@ def test_verify_token(client, db_session, test_credentials, test_db_user):
     # Get token
     login_response = client.post(
         f"{settings.API_V1_STR}/auth/login",
-        data=login_data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        json=login_data,
+        headers={"Content-Type": "application/json"}
     )
 
     print(f"Login response status: {login_response.status_code}")

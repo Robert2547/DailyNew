@@ -10,6 +10,7 @@ services:
       - USER_SERVICE_URL=http://user_service:8002
     depends_on:
       - auth_db
+      - test_db
     networks:
       - app_network
       

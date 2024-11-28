@@ -28,8 +28,8 @@ def test_signup_validation_errors(client):
             "case": "password_mismatch",
             "data": {
                 "email": "test@example.com",
-                "password": "TestPassword123!",
-                "password_confirm": "DifferentPassword123!"
+                "password": "TestPassword123",
+                "password_confirm": "DifferentPassword123"
             },
             "expected_msg": "passwords do not match"
         },
@@ -37,19 +37,19 @@ def test_signup_validation_errors(client):
             "case": "missing_uppercase",
             "data": {
                 "email": "test@example.com",
-                "password": "testpassword123!",
-                "password_confirm": "testpassword123!"
+                "password": "testpassword123",
+                "password_confirm": "testpassword123"
             },
             "expected_msg": "Password must contain at least one uppercase letter"
         },
         {
-            "case": "missing_special_char",
+            "case": "too_short",
             "data": {
                 "email": "test@example.com",
-                "password": "TestPassword123",
-                "password_confirm": "TestPassword123"
+                "password": "Test1",
+                "password_confirm": "Test1"
             },
-            "expected_msg": "Password must contain at least one special character"
+            "expected_msg": "string should have at least 8 characters"
         }
     ]
 
@@ -58,11 +58,16 @@ def test_signup_validation_errors(client):
             f"{settings.API_V1_STR}/auth/signup",
             json=test_case["data"]
         )
-        assert response.status_code == 422
+        
+        assert response.status_code == 422, f"Expected 422 status code for {test_case['case']}, got {response.status_code} with response: {response.json()}"
+        
+        error_detail = response.json()["detail"]
+        error_messages = [error["msg"].lower() for error in error_detail]
+        
         assert any(
-            test_case["expected_msg"].lower() in error["msg"].lower() 
-            for error in response.json()["detail"]
-        ), f"Expected error message not found for {test_case['case']}"
+            test_case["expected_msg"].lower() in error_msg
+            for error_msg in error_messages
+        ), f"Expected '{test_case['expected_msg']}' in error messages for {test_case['case']}. Got: {error_messages}"
 
 def test_signup_duplicate_email(client, mock_user_service):
     """Test signup with duplicate email."""
