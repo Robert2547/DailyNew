@@ -24,7 +24,7 @@ export const SignupForm = () => {
         setError(health.message);
       }
     };
-
+    console.log("Checking services...");
     checkServices();
   }, []);
 

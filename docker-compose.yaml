@@ -5,11 +5,15 @@ services:
     ports:
       - "${AUTH_SERVICE_PORT}:8001"
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@auth_db:5432/${AUTH_DB_NAME}  
+      - POSTGRES_HOST=auth_db
+      - AUTH_DB_PORT=5432
+      - AUTH_DB_NAME=${AUTH_DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
       - SECRET_KEY=${SECRET_KEY}
-      - USER_SERVICE_URL=http://user_service:8002
     depends_on:
-      - auth_db
+      auth_db:
+        condition: service_healthy
     networks:
       - app_network
 
@@ -22,7 +26,8 @@ services:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@user_db:5432/${USER_DB_NAME} 
       - AUTH_SERVICE_URL=http://auth_service:8001
     depends_on:
-      - user_db
+      user_db:
+        condition: service_healthy
     networks:
       - app_network
       
@@ -35,7 +40,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5440:5432"  # Changed from 5434
+      - "5440:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${AUTH_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
@@ -48,11 +58,15 @@ services:
     volumes:
       - user_db_data:/var/lib/postgresql/data
     ports:
-      - "5441:5432"  # Changed from 5433
+      - "5441:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${USER_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
-  # Test databases
   auth_test_db:
     image: postgres:13
     environment:
@@ -60,7 +74,12 @@ services:
       - POSTGRES_USER=test_user
       - POSTGRES_PASSWORD=test_password
     ports:
-      - "5442:5432"  # Changed from 5436
+      - "5442:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d auth_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
@@ -71,7 +90,12 @@ services:
       - POSTGRES_USER=test_user
       - POSTGRES_PASSWORD=test_password
     ports:
-      - "5443:5432"  # Changed from 5437
+      - "5443:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d user_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 

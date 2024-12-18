@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { authApi } from "../../api/auth";
 import { LoginCredentials } from "../../types";
 import toast from "react-hot-toast";
+import { checkServiceHealth } from "../../utils/serviceHealth";
 
 export const LoginForm = () => {
   const navigate = useNavigate();
@@ -14,8 +15,27 @@ export const LoginForm = () => {
   const [error, setError] = useState("");
   const setToken = useAuthStore((state) => state.setToken);
 
+  useEffect(() => {
+    const checkServices = async () => {
+      const health = await checkServiceHealth();
+      if (!health.auth || !health.user) {
+        toast.error(health.message);
+        setError(health.message);
+      }
+    };
+    console.log("Checking services...");
+    checkServices();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const health = await checkServiceHealth();
+    if (!health.auth || !health.user) {
+      toast.error(health.message);
+      setError(health.message);
+      return;
+    }
 
     const loadingToast = toast.loading("Logging in...");
 

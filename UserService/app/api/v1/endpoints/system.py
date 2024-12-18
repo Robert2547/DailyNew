@@ -20,14 +20,14 @@ async def health_check() -> Dict[str, Any]:
 
         return {
             "status": "healthy",
-            "service": "auth-service",
+            "service": "user-service",
             "database": "connected",
         }
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         return {
             "status": "unhealthy",
-            "service": "auth-service",
+            "service": "user-service",
             "database": "disconnected",
             "error": str(e),
         }
