@@ -14,7 +14,7 @@ export const SignupForm = () => {
     password_confirm: "",
   });
   const [error, setError] = useState("");
-  const setToken = useAuthStore((state) => state.setToken);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
     const checkServices = async () => {
@@ -51,7 +51,7 @@ export const SignupForm = () => {
       }
 
       // Sign up
-      await authApi.signup(formData);
+      const userData = await authApi.signup(formData);
 
       // Login after successful signup
       const tokenResponse = await authApi.login({
@@ -59,11 +59,12 @@ export const SignupForm = () => {
         password: formData.password,
       });
 
-      setToken(tokenResponse.access_token);
+      // Set both user and token in the auth store
+      setAuth(userData, tokenResponse.access_token);
 
       // Dismiss loading and show success
       toast.dismiss(loadingToast);
-      toast.success("Account created successfully!");
+      toast.success("Account created successfully! Welcome aboard!");
 
       // Small delay before navigation for better UX
       setTimeout(() => {

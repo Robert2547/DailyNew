@@ -13,7 +13,7 @@ export const LoginForm = () => {
     password: "",
   });
   const [error, setError] = useState("");
-  const setToken = useAuthStore((state) => state.setToken);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
     const checkServices = async () => {
@@ -28,6 +28,7 @@ export const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     const health = await checkServiceHealth();
     if (!health.auth || !health.user) {
@@ -39,19 +40,24 @@ export const LoginForm = () => {
     const loadingToast = toast.loading("Logging in...");
 
     try {
-      const response = await authApi.login(credentials);
-      setToken(response.access_token);
+      // Get token from login
+      const tokenResponse = await authApi.login(credentials);
 
-      // Dismiss loading and show success
+      // Verify token and get user data
+      const userData = await authApi.verifyToken(tokenResponse.access_token);
+
+      // Set both user and token in persistent store
+      setAuth(userData, tokenResponse.access_token);
+
+      // Dismiss loading toast and show success
       toast.dismiss(loadingToast);
-      toast.success("Successfully logged in!");
+      toast.success(`Welcome back, ${userData.email}!`);
 
-      // Small delay before navigation
+      // Navigate after a short delay for better UX
       setTimeout(() => {
         navigate("/dashboard");
       }, 1000);
     } catch (err: any) {
-      // Dismiss loading and show error
       toast.dismiss(loadingToast);
       const errorMessage = err.response?.data?.detail || "Login failed";
       toast.error(errorMessage);
