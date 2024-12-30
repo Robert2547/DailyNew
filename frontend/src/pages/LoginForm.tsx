@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuthStore } from "../../store/authStore";
-import { authApi } from "../../api/auth";
-import { LoginCredentials } from "../../types";
+import { useAuthStore } from "../store/authStore";
+import { authApi } from "../api/auth";
+import { LoginCredentials } from "../types";
 import toast from "react-hot-toast";
-import { checkServiceHealth } from "../../utils/serviceHealth";
+import { checkServiceHealth } from "../utils/serviceHealth";
 
 export const LoginForm = () => {
   const navigate = useNavigate();
