@@ -23,7 +23,6 @@ export const LoginForm = () => {
         setError(health.message);
       }
     };
-    console.log("Checking services...");
     checkServices();
   }, []);
 
@@ -49,7 +48,7 @@ export const LoginForm = () => {
 
       // Small delay before navigation
       setTimeout(() => {
-        navigate("/profile");
+        navigate("/dashboard");
       }, 1000);
     } catch (err: any) {
       // Dismiss loading and show error

@@ -24,7 +24,6 @@ export const SignupForm = () => {
         setError(health.message);
       }
     };
-    console.log("Checking services...");
     checkServices();
   }, []);
 
@@ -68,7 +67,7 @@ export const SignupForm = () => {
 
       // Small delay before navigation for better UX
       setTimeout(() => {
-        navigate("/profile");
+        navigate("/dashboard");
       }, 1000);
     } catch (err: any) {
       toast.dismiss(loadingToast);

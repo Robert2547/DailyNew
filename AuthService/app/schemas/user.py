@@ -44,7 +44,7 @@ class UserCreate(UserBase, PasswordMixin):
     """Schema for user creation."""
 
     password_confirm: str = Field(
-        ..., min_length=8, description="Confirm password (must match password)"
+        ..., min_length=5, description="Confirm password (must match password)"
     )
 
     @field_validator("password_confirm")

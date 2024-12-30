@@ -11,10 +11,12 @@ import { MainLayout } from "./components/layout/MainLayout";
 import { AuthLayout } from "./components/layout/AuthLayout";
 import { SignupForm } from "./components/auth/SignupForm";
 import { Toaster } from "react-hot-toast"; // Add this
+import { DashboardPage } from "./pages/DashboardPage";
 
 const queryClient = new QueryClient();
 
 function App() {
+  
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster
@@ -53,13 +55,15 @@ function App() {
           {/* Protected routes (with navbar) */}
           <Route element={<PrivateRoute />}>
             <Route element={<MainLayout />}>
-              {/* <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/dashboard" element={<DashboardPage />} /> */}
+              {
+                /*<Route path="/profile" element={<ProfilePage />} /> */
+                <Route path="/dashboard" element={<DashboardPage />} />
+              }
             </Route>
           </Route>
 
           {/* Redirect root to login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
     </QueryClientProvider>
