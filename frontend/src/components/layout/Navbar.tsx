@@ -1,8 +1,9 @@
+// src/components/layout/Navbar.tsx
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, Search, User } from "lucide-react";
+import { Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useAuthStore } from "../../store/authStore";
+import { useAuthStore } from "@/store/authStore";
+import { TickerSearch } from "@/components/search/TickerSearch";
 import toast from "react-hot-toast";
 
 export const Navbar = () => {
@@ -30,14 +31,7 @@ export const Navbar = () => {
 
           {/* Search */}
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center max-w-2xl">
-            <div className="relative w-full">
-              <Input
-                type="text"
-                placeholder="Search companies..."
-                className="w-full pl-10"
-              />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            </div>
+            <TickerSearch />
           </div>
 
           {/* Right Nav Items */}
