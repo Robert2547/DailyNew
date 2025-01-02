@@ -1,3 +1,4 @@
+//src/components/search/TickerSearch.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
@@ -10,7 +11,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { DialogTitle } from "@/components/ui/dialog";
+import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { searchCompanies } from "@/services/search";
 import type { CompanySearchResult } from "@/services/search";
 
@@ -31,7 +32,7 @@ export const TickerSearch = () => {
     setIsLoading(true);
     try {
       const searchResults = await searchCompanies(query.trim());
-      console.log("Search results:", searchResults); // Debug log
+      console.log("Setting results:", searchResults);
       setResults(searchResults);
     } catch (error) {
       console.error("Search error:", error);
@@ -49,11 +50,6 @@ export const TickerSearch = () => {
     return () => clearTimeout(timer);
   }, [searchQuery, performSearch]);
 
-  const handleSelect = (symbol: string) => {
-    setOpen(false);
-    navigate(`/company/${symbol}`);
-  };
-
   return (
     <>
       <div
@@ -70,8 +66,12 @@ export const TickerSearch = () => {
       </div>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <div>
+        <div className="flex flex-col">
           <DialogTitle className="sr-only">Search companies</DialogTitle>
+          <DialogDescription className="sr-only">
+            Search for companies using their name or ticker symbol
+          </DialogDescription>
+
           <CommandInput
             placeholder="Search companies or tickers..."
             value={searchQuery}
@@ -80,22 +80,28 @@ export const TickerSearch = () => {
           />
 
           <CommandList>
-            <CommandEmpty className="py-6 text-center text-sm">
-              {isLoading ? "Searching..." : "No companies found"}
-            </CommandEmpty>
-
-            {!isLoading && results.length > 0 && (
-              <CommandGroup>
+            {isLoading ? (
+              <CommandEmpty>Searching...</CommandEmpty>
+            ) : results.length === 0 ? (
+              <CommandEmpty>No companies found</CommandEmpty>
+            ) : (
+              <CommandGroup heading="Companies">
                 {results.map((result) => (
                   <CommandItem
                     key={result.symbol}
                     value={result.symbol}
-                    onSelect={() => handleSelect(result.symbol)}
+                    className="cursor-pointer"
+                    onSelect={() => {
+                      console.log("Selected:", result.symbol);
+                      navigate(`/company/${result.symbol}`);
+                      setOpen(false);
+                      setSearchQuery("");
+                    }}
                   >
                     <div className="flex flex-col">
                       <div className="font-medium">{result.symbol}</div>
                       <div className="text-sm text-muted-foreground">
-                        {result.name}
+                        {result.name} • {result.exchange}
                       </div>
                     </div>
                   </CommandItem>

@@ -1,52 +1,40 @@
-const ALPHA_VANTAGE_API_KEY = import.meta.env.VITE_ALPHA_VANTAGE_API_KEY;
-
+// src/services/search.ts
 export interface CompanySearchResult {
   symbol: string;
   name: string;
-  type: string;
-  region: string;
+  exchange: string;
 }
 
-export const searchCompanies = async (
-  query: string
-): Promise<CompanySearchResult[]> => {
-  console.log("Searching for:", query);
-  console.log("Using API key:", ALPHA_VANTAGE_API_KEY); // Make sure to remove this in production
-
+export const searchCompanies = async (query: string): Promise<CompanySearchResult[]> => {
   if (!query.trim()) return [];
 
   try {
-    const url = `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(
-      query
-    )}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-    console.log("Fetching from URL:", url);
-
-    const response = await fetch(url);
-    console.log("Response status:", response.status);
-
-    const data = await response.json();
-    console.log("API Response:", data);
+    console.log('Fetching from proxy:', query);
+    const response = await fetch(`http://localhost:3001/api/search?query=${encodeURIComponent(query)}`);
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      console.error('Response not OK:', response.status);
+      throw new Error('Failed to fetch');
     }
 
-    if (!data.bestMatches) {
-      console.log("No matches found in response");
+    const data = await response.json();
+    console.log('Received data:', data);
+
+    if (!data?.ResultSet?.Result) {
+      console.log('No results found in response');
       return [];
     }
 
-    const results = data.bestMatches.map((match: any) => ({
-      symbol: match["1. symbol"],
-      name: match["2. name"],
-      type: match["3. type"],
-      region: match["4. region"],
+    const results = data.ResultSet.Result.map((result: any) => ({
+      symbol: result.symbol,
+      name: result.name,
+      exchange: result.exch || 'N/A'
     }));
 
-    console.log("Processed results:", results);
+    console.log('Processed results:', results);
     return results;
   } catch (error) {
-    console.error("Error searching companies:", error);
+    console.error('Search error:', error);
     return [];
   }
 };
