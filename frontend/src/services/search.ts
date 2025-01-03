@@ -1,11 +1,6 @@
 const ALPHA_VANTAGE_API_KEY = import.meta.env.VITE_ALPHA_VANTAGE_API_KEY;
 
-export interface CompanySearchResult {
-  symbol: string;
-  name: string;
-  type: string;
-  region: string;
-}
+import type { CompanySearchResult } from "../types";
 
 export const searchCompanies = async (
   query: string

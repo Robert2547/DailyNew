@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { DialogTitle } from "@/components/ui/dialog";
 import { searchCompanies } from "@/services/search";
-import type { CompanySearchResult } from "@/services/search";
+import type { CompanySearchResult } from "@/types/index";
 
 export const TickerSearch = () => {
   const navigate = useNavigate();
