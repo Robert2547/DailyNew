@@ -13,6 +13,7 @@ import { SignupForm } from "./pages/SignupForm";
 import { Toaster } from "react-hot-toast"; // Add this
 import { DashboardPage } from "./pages/DashboardPage";
 import { CompanyPage } from "./pages/CompanyPage";
+import { Mock } from "./pages/mockup/Mock";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/company/:symbol" element={<CompanyPage />} />
+                <Route path="/mock" element={<Mock />} />
               </>
             </Route>
           </Route>

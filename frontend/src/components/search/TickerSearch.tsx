@@ -10,7 +10,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { DialogTitle } from "@/components/ui/dialog";
+import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { searchCompanies } from "@/services/search";
 import type { CompanySearchResult } from "@/types/index";
 
@@ -72,6 +72,9 @@ export const TickerSearch = () => {
       <CommandDialog open={open} onOpenChange={setOpen}>
         <div>
           <DialogTitle className="sr-only">Search companies</DialogTitle>
+          <DialogDescription id="dialog-description" className="sr-only">
+            Search for companies by name or ticker symbol
+          </DialogDescription>
           <CommandInput
             placeholder="Search companies or tickers..."
             value={searchQuery}
