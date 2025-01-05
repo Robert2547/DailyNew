@@ -16,6 +16,7 @@ import { CompanyPage } from "./pages/CompanyPage";
 import APIErrorPage from "./pages/APIError";
 import { Mock } from "./pages/mockup/Mock";
 import { ProfilePage } from "./pages/ProfilePage";
+import { WatchlistPage } from "./pages/WatchlistPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +76,7 @@ function App() {
               <Route path="/company/:symbol" element={<CompanyPage />} />
               <Route path="/mock" element={<Mock />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/watchlist" element={<WatchlistPage />} />
             </Route>
           </Route>
 

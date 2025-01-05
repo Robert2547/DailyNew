@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const mockWatchlist = [
   {
@@ -90,6 +91,7 @@ const StatsCard = ({ title, value, trend, icon: Icon, trendColor }: any) => (
 );
 
 export const DashboardPage = () => {
+  const navigate = useNavigate();
   const stats = [
     {
       title: "Tracked Companies",
@@ -140,7 +142,12 @@ export const DashboardPage = () => {
               <Star className="h-5 w-5 text-yellow-500" />
               Watchlist
             </CardTitle>
-            <Button variant="ghost" size="sm" className="text-blue-600">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-blue-600"
+              onClick={() => navigate("/watchlist")}
+            >
               View All
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
