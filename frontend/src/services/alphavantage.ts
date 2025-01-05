@@ -51,12 +51,95 @@ interface CompanyData {
   news: NewsItem[];
 }
 
+// Enhanced number formatting utilities
+export const formatLargeNumber = (
+  value: number | string | undefined | null
+): string => {
+  // Handle undefined, null, or empty string
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  // Convert string to number if necessary
+  const num = typeof value === "string" ? parseFloat(value) : value;
+
+  // Check if the conversion resulted in a valid number
+  if (isNaN(num)) {
+    return "-";
+  }
+
+  try {
+    if (Math.abs(num) >= 1e12) {
+      return (num / 1e12).toFixed(2) + "T";
+    } else if (Math.abs(num) >= 1e9) {
+      return (num / 1e9).toFixed(2) + "B";
+    } else if (Math.abs(num) >= 1e6) {
+      return (num / 1e6).toFixed(2) + "M";
+    } else if (Math.abs(num) >= 1e3) {
+      return num.toLocaleString();
+    }
+    return num.toLocaleString();
+  } catch (error) {
+    console.error("Error formatting number:", error);
+    return "-";
+  }
+};
+
+// Format percentage values safely
+export const formatPercentage = (
+  value: number | string | undefined | null,
+  decimals = 2
+): string => {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  const num = typeof value === "string" ? parseFloat(value) : value;
+
+  if (isNaN(num)) {
+    return "-";
+  }
+
+  try {
+    return `${num.toFixed(decimals)}%`;
+  } catch (error) {
+    return "-";
+  }
+};
+
+// Format currency values safely
+export const formatCurrency = (
+  value: number | string | undefined | null,
+  currency = "USD",
+  decimals = 2
+): string => {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  const num = typeof value === "string" ? parseFloat(value) : value;
+
+  if (isNaN(num)) {
+    return "-";
+  }
+
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(num);
+  } catch (error) {
+    return "-";
+  }
+};
+
 /**
  * Fetches all necessary company data in the minimum number of API calls
  * Uses company overview data where possible to avoid redundant calls
  */
 export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
-  // Get company overview first as it contains most fundamental data
   const { data: overview, error: overviewError } =
     await fetchFromAlphaVantage<CompanyOverview>({
       function: "OVERVIEW",
@@ -67,7 +150,6 @@ export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
     throw new Error(overviewError || "Failed to fetch company overview");
   }
 
-  // Get time series data for stock price information
   const { data: timeSeriesData, error: timeSeriesError } =
     await fetchFromAlphaVantage<TimeSeriesResponse>({
       function: "TIME_SERIES_DAILY",
@@ -79,7 +161,6 @@ export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
     throw new Error(timeSeriesError || "Failed to fetch time series data");
   }
 
-  // Get news and sentiment data
   const { data: newsData, error: newsError } =
     await fetchFromAlphaVantage<NewsResponse>({
       function: "NEWS_SENTIMENT",
@@ -98,7 +179,6 @@ export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
   };
 };
 
-// Transform time series data into StockDataPoint format
 const transformTimeSeriesData = (
   data: TimeSeriesResponse
 ): StockDataPoint[] => {
@@ -106,16 +186,15 @@ const transformTimeSeriesData = (
 
   return Object.entries(data["Time Series (Daily)"]).map(([date, values]) => ({
     date,
-    price: parseFloat(values["4. close"]),
-    volume: parseInt(values["5. volume"], 10),
-    open: parseFloat(values["1. open"]),
-    high: parseFloat(values["2. high"]),
-    low: parseFloat(values["3. low"]),
-    close: parseFloat(values["4. close"]),
+    price: parseFloat(values["4. close"]) || 0,
+    volume: parseInt(values["5. volume"], 10) || 0,
+    open: parseFloat(values["1. open"]) || 0,
+    high: parseFloat(values["2. high"]) || 0,
+    low: parseFloat(values["3. low"]) || 0,
+    close: parseFloat(values["4. close"]) || 0,
   }));
 };
 
-// Transform news data into NewsItem format
 const transformNewsData = (data: NewsResponse): NewsItem[] => {
   if (!data?.feed) return [];
 
@@ -129,15 +208,6 @@ const transformNewsData = (data: NewsResponse): NewsItem[] => {
     sentiment: item.overall_sentiment_label,
     relatedTickers: item.ticker_sentiment?.map((t) => t.ticker) || [],
   }));
-};
-
-// Helper function to format large numbers consistently
-export const formatLargeNumber = (num: string | number) => {
-  const n = typeof num === "string" ? parseFloat(num) : num;
-  if (n >= 1e12) return (n / 1e12).toFixed(2) + "T";
-  if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
-  if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
-  return n.toLocaleString();
 };
 
 export const searchCompany = async (
@@ -184,6 +254,6 @@ export const transformSearchResults = (data: SearchResponse) => {
     type: match["3. type"],
     region: match["4. region"],
     currency: match["8. currency"],
-    matchScore: parseFloat(match["9. matchScore"]),
+    matchScore: parseFloat(match["9. matchScore"]) || 0,
   }));
 };
