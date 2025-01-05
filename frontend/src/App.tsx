@@ -10,12 +10,25 @@ import { PrivateRoute } from "./components/auth/PrivateRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { AuthLayout } from "./components/layout/AuthLayout";
 import { SignupForm } from "./pages/SignupForm";
-import { Toaster } from "react-hot-toast"; // Add this
+import { Toaster } from "react-hot-toast";
 import { DashboardPage } from "./pages/DashboardPage";
 import { CompanyPage } from "./pages/CompanyPage";
+import APIErrorPage from "./pages/APIError";
 import { Mock } from "./pages/mockup/Mock";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Don't retry on rate limit errors
+        if (error?.message?.includes("rate limit")) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+    },
+  },
+});
 
 function App() {
   return (
@@ -56,17 +69,15 @@ function App() {
           {/* Protected routes (with navbar) */}
           <Route element={<PrivateRoute />}>
             <Route element={<MainLayout />}>
-              <>
-                {/*<Route path="/profile" element={<ProfilePage />} /> */}
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/company/:symbol" element={<CompanyPage />} />
-                <Route path="/mock" element={<Mock />} />
-              </>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/company/:symbol" element={<CompanyPage />} />
+              <Route path="/mock" element={<Mock />} />
             </Route>
           </Route>
 
-          {/* Redirect root to login */}
+          {/* Error routes (accessible from anywhere) */}
+          <Route path="/error" element={<APIErrorPage />} />
         </Routes>
       </Router>
     </QueryClientProvider>
