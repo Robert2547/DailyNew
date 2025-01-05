@@ -65,19 +65,24 @@ export const TickerSearch = () => {
           query.trim()
         );
 
-        if (error) {
-          if (error.includes("rate limit")) {
-            toast.error(
-              "Search rate limit reached. Please try again in a minute.",
-              {
-                icon: "⚠️",
-                duration: 4000,
-              }
-            );
-            navigate("/error", { state: { type: "RATE_LIMIT" } });
-            return;
-          }
-          throw new Error(error);
+        console.log("Search results:", data);
+
+        if (error || !data?.bestMatches || data.bestMatches.length === 0) {
+          const message =
+            "Search rate limit reached. Please try again later or upgrade your subscription.";
+          toast.error(message, {
+            icon: "⚠️",
+            duration: 4000,
+          });
+          setTimeout(() => {
+            navigate("/error", {
+              state: {
+                type: "RATE_LIMIT",
+                message,
+              },
+            });
+          }, 200);
+          return;
         }
 
         if (data) {

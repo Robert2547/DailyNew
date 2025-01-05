@@ -46,6 +46,7 @@ export interface NewsItem {
 export interface AlphaVantageResponse<T> {
   data: T | null;
   error?: string;
+  type?: "RATE_LIMIT" | "API_ERROR";
 }
 
 export interface TimeSeriesResponse {

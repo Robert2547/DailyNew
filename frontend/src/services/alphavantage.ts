@@ -8,6 +8,12 @@ import type {
   SearchResponse,
 } from "@/types/alphavantage";
 
+import {
+  createRateLimitError,
+  handleApiError,
+  isRateLimitResponse,
+} from "./error";
+
 const API_KEY = import.meta.env.VITE_ALPHAVANTAGE_API_KEY;
 const BASE_URL = "https://www.alphavantage.co/query";
 
@@ -31,19 +37,22 @@ const fetchFromAlphaVantage = async <T>(
     }
     const data = await response.json();
 
+    if (isRateLimitResponse(data)) {
+      throw createRateLimitError();
+    }
+
     if (data["Error Message"]) {
       throw new Error(data["Error Message"]);
-    }
-    if (data["Note"]?.includes("API call frequency")) {
-      throw new Error("API rate limit exceeded");
     }
 
     return { data };
   } catch (error) {
     console.error("❌ AlphaVantage Error:", error);
+    const apiError = handleApiError(error);
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: apiError.message,
+      type: apiError.type,
     };
   }
 };
