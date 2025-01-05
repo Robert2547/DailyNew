@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { TickerSearch } from "@/components/search/TickerSearch";
 import toast from "react-hot-toast";
+import { NotificationPopover } from "@/components/notification/NotificationPopover";
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -39,16 +40,13 @@ export const Navbar = () => {
             {user ? (
               <>
                 <div className="relative">
-                  <Button variant="ghost" size="icon">
-                    <Bell className="h-5 w-5" />
-                  </Button>
-                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500"></span>
+                  <NotificationPopover />
                 </div>
                 <Link to="/profile">
                   <Button variant="ghost" size="icon" className="relative">
                     <User className="h-5 w-5" />
                     <span className="absolute -bottom-4 text-xs font-medium text-gray-600 whitespace-nowrap">
-                      {user.email.split("@")[0]}
+                      {/* OPTIONAL: Add username below profile  */}
                     </span>
                   </Button>
                 </Link>

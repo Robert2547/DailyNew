@@ -14,7 +14,6 @@ import {
   Bell,
   BellOff,
   TrendingUp,
-  DollarSign,
   PieChart,
   Users,
   AlertCircle,

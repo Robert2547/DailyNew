@@ -6,7 +6,6 @@ import type {
   TimeSeriesResponse,
   NewsResponse,
   SearchResponse,
-  SearchMatch,
 } from "@/types/alphavantage";
 
 const API_KEY = import.meta.env.VITE_ALPHAVANTAGE_API_KEY;

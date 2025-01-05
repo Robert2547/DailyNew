@@ -15,6 +15,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { CompanyPage } from "./pages/CompanyPage";
 import APIErrorPage from "./pages/APIError";
 import { Mock } from "./pages/mockup/Mock";
+import { ProfilePage } from "./pages/ProfilePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,7 @@ function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/company/:symbol" element={<CompanyPage />} />
               <Route path="/mock" element={<Mock />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Route>
 
