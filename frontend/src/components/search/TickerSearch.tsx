@@ -11,48 +11,91 @@ import {
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { searchCompanies } from "@/services/search";
-import type { CompanySearchResult } from "@/types/index";
+import * as AlphaVantageService from "@/services/alphavantage";
+import { useDebounce } from "@/hooks/useDebounce"; 
+import toast from "react-hot-toast"; 
+
+interface SearchResult {
+  symbol: string;
+  name: string;
+  type: string;
+  region: string;
+  currency: string;
+  matchScore: number;
+}
 
 export const TickerSearch = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [results, setResults] = useState<CompanySearchResult[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const performSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setResults([]);
-      setIsLoading(false);
-      return;
-    }
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
-    setIsLoading(true);
-    try {
-      const searchResults = await searchCompanies(query.trim());
-      console.log("Search results:", searchResults); // Debug log
-      setResults(searchResults);
-    } catch (error) {
-      console.error("Search error:", error);
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const performSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setResults([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const { data, error } = await AlphaVantageService.searchCompany(
+          query.trim()
+        );
+
+        if (error) {
+          if (error.includes("rate limit")) {
+            toast.error(
+              "Search rate limit reached. Please try again in a minute."
+            );
+            navigate("/error", { state: { type: "RATE_LIMIT" } });
+            return;
+          }
+          throw new Error(error);
+        }
+
+        if (data) {
+          const transformedResults =
+            AlphaVantageService.transformSearchResults(data);
+          setResults(transformedResults);
+        } else {
+          setResults([]);
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+        toast.error("Failed to search companies");
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [navigate]
+  );
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      performSearch(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, performSearch]);
+    performSearch(debouncedSearch);
+  }, [debouncedSearch, performSearch]);
 
   const handleSelect = (symbol: string) => {
     setOpen(false);
     navigate(`/company/${symbol}`);
   };
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   return (
     <>
@@ -96,7 +139,12 @@ export const TickerSearch = () => {
                     onSelect={() => handleSelect(result.symbol)}
                   >
                     <div className="flex flex-col">
-                      <div className="font-medium">{result.symbol}</div>
+                      <div className="flex items-center">
+                        <span className="font-medium">{result.symbol}</span>
+                        <span className="ml-2 text-xs text-gray-500">
+                          {result.region} · {result.currency}
+                        </span>
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {result.name}
                       </div>

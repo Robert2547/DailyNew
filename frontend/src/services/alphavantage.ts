@@ -1,4 +1,3 @@
-// src/services/alphavantage.ts
 import type {
   CompanyOverview,
   StockDataPoint,
@@ -6,6 +5,8 @@ import type {
   AlphaVantageResponse,
   TimeSeriesResponse,
   NewsResponse,
+  SearchResponse,
+  SearchMatch,
 } from "@/types/alphavantage";
 
 const API_KEY = import.meta.env.VITE_ALPHAVANTAGE_API_KEY;
@@ -138,4 +139,52 @@ export const formatLargeNumber = (num: string | number) => {
   if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
   if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
   return n.toLocaleString();
+};
+
+export const searchCompany = async (
+  query: string
+): Promise<AlphaVantageResponse<SearchResponse>> => {
+  console.log(`🔄 AlphaVantage Search:`, {
+    function: "SYMBOL_SEARCH",
+    query,
+  });
+
+  try {
+    const queryParams = new URLSearchParams({
+      function: "SYMBOL_SEARCH",
+      keywords: query,
+      apikey: API_KEY,
+    });
+
+    const response = await fetch(`${BASE_URL}?${queryParams}`);
+    const data = await response.json();
+
+    if (data["Error Message"]) {
+      throw new Error(data["Error Message"]);
+    }
+    if (data["Note"]?.includes("API call frequency")) {
+      throw new Error("API rate limit exceeded");
+    }
+
+    return { data };
+  } catch (error) {
+    console.error("❌ AlphaVantage Search Error:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const transformSearchResults = (data: SearchResponse) => {
+  if (!data?.bestMatches) return [];
+
+  return data.bestMatches.map((match) => ({
+    symbol: match["1. symbol"],
+    name: match["2. name"],
+    type: match["3. type"],
+    region: match["4. region"],
+    currency: match["8. currency"],
+    matchScore: parseFloat(match["9. matchScore"]),
+  }));
 };
