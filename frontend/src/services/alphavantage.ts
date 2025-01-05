@@ -26,6 +26,9 @@ const fetchFromAlphaVantage = async <T>(
     });
 
     const response = await fetch(`${BASE_URL}?${queryParams}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch data");
+    }
     const data = await response.json();
 
     if (data["Error Message"]) {
