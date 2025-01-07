@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  watchlist_service:
+    build: .
+    ports:
+      - "8003:8003"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_SERVER=watchlist_db
+      - POSTGRES_DB=watchlist_db
+      - AUTH_SERVICE_URL=http://auth_service:8001
+      - USER_SERVICE_URL=http://user_service:8002
+      - REDIS_HOST=redis
+    depends_on:
+      - watchlist_db
+      - redis
+
+  watchlist_db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=watchlist_db
+    volumes:
+      - watchlist_db_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+volumes:
+  watchlist_db_data:
+  redis_data:
