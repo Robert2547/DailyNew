@@ -39,3 +39,22 @@ export interface TokenResponse {
   access_token: string;
   token_type: string;
 }
+
+export interface CompanySearchResult {
+  symbol: string;
+  name: string;
+  type: string;
+  region: string;
+}
+
+export interface CompanyOverview {
+  Symbol: string;
+  Name: string;
+  Description: string;
+  Exchange: string;
+  Currency: string;
+  Country: string;
+  Sector: string;
+  Industry: string;
+  MarketCapitalization: string;
+}
