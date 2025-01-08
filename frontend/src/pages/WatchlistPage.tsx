@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react"; // Add useCallback
 import {
   TrendingUp,
   TrendingDown,
@@ -17,65 +17,49 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-
-const mockWatchlist = [
-  {
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    price: 182.63,
-    change: 1.25,
-    changePercent: 0.69,
-    sector: "Technology",
-    marketCap: "2.8T",
-  },
-  {
-    symbol: "MSFT",
-    name: "Microsoft Corp.",
-    price: 338.11,
-    change: -2.34,
-    changePercent: -0.69,
-    sector: "Technology",
-    marketCap: "2.5T",
-  },
-  {
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    price: 125.3,
-    change: 0.45,
-    changePercent: 0.36,
-    sector: "Technology",
-    marketCap: "1.7T",
-  },
-  {
-    symbol: "AMZN",
-    name: "Amazon.com Inc.",
-    price: 127.74,
-    change: -0.98,
-    changePercent: -0.76,
-    sector: "Consumer Cyclical",
-    marketCap: "1.3T",
-  },
-];
+import { useWatchlistStore } from "@/store/watchlistStore";
 
 export const WatchlistPage = () => {
   const navigate = useNavigate();
-  const [stocks, setStocks] = useState(mockWatchlist);
   const [searchQuery, setSearchQuery] = useState("");
+  const {
+    items = [],
+    isLoading,
+    fetchWatchlist,
+    removeFromWatchlist,
+  } = useWatchlistStore();
 
-  const handleRemoveStock = (symbol: string) => {
-    setStocks(stocks.filter((stock) => stock.symbol !== symbol));
+  // Wrap fetchWatchlist in useCallback
+  const fetchWatchlistData = useCallback(() => {
+    fetchWatchlist();
+  }, [fetchWatchlist]);
+
+  useEffect(() => {
+    fetchWatchlistData();
+  }, [fetchWatchlistData]);
+
+  const handleRemoveStock = async (symbol: string) => {
+    await removeFromWatchlist(symbol);
   };
 
   const handleStockClick = (symbol: string) => {
     navigate(`/company/${symbol}`);
   };
 
-  const filteredStocks = stocks.filter(
+  // Add safety check for items
+  const filteredStocks = (items || []).filter(
     (stock) =>
       stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
       stock.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Header */}

@@ -1,27 +1,18 @@
 import { create } from "zustand";
 import * as watchlistAPI from "@/api/watchlist";
+import { WatchlistItem } from "@/api/watchlist";
 
 interface WatchlistStore {
-  stocks: WatchlistStock[];
+  items: WatchlistItem[];
   isLoading: boolean;
   error: string | null;
   fetchWatchlist: () => Promise<void>;
-  addStock: (symbol: string) => Promise<void>;
-  removeStock: (symbol: string) => Promise<void>;
-}
-
-interface WatchlistStock {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  sector: string;
-  marketCap: string;
+  addToWatchlist: (symbol: string) => Promise<void>;
+  removeFromWatchlist: (symbol: string) => Promise<void>;
 }
 
 export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
-  stocks: [],
+  items: [],
   isLoading: false,
   error: null,
 
@@ -29,29 +20,29 @@ export const useWatchlistStore = create<WatchlistStore>((set, get) => ({
     set({ isLoading: true });
     try {
       const data = await watchlistAPI.getWatchlist();
-      set({ stocks: data, error: null });
+      set({ items: data.items, error: null });
     } catch (error) {
-      set({ error: "Failed to fetch watchlist" });
+      set({ error: "Failed to fetch watchlist", items: [] });
     } finally {
       set({ isLoading: false });
     }
   },
 
-  addStock: async (symbol) => {
+  addToWatchlist: async (symbol: string) => {
     try {
       await watchlistAPI.addToWatchlist(symbol);
       await get().fetchWatchlist();
     } catch (error) {
-      set({ error: "Failed to add stock to watchlist" });
+      set({ error: "Failed to add to watchlist" });
     }
   },
 
-  removeStock: async (symbol) => {
+  removeFromWatchlist: async (symbol: string) => {
     try {
       await watchlistAPI.removeFromWatchlist(symbol);
       await get().fetchWatchlist();
     } catch (error) {
-      set({ error: "Failed to remove stock from watchlist" });
+      set({ error: "Failed to remove from watchlist" });
     }
   },
 }));

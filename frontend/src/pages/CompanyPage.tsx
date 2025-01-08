@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import * as AlphaVantageService from "@/services/alphavantage";
@@ -11,7 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Bell, BellOff, TrendingUp, PieChart, Users } from "lucide-react";
+import { Star, TrendingUp, PieChart, Users } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -22,12 +22,19 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { cn } from "@/utils/cn";
+import { useWatchlistStore } from "@/store/watchlistStore";
 
 export const CompanyPage = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const {
+    items = [],
+    addToWatchlist,
+    removeFromWatchlist,
+    fetchWatchlist,
+  } = useWatchlistStore();
 
+  // Query for company data
   const { data, isLoading, error } = useQuery({
     queryKey: ["company", symbol],
     queryFn: async () => {
@@ -35,10 +42,33 @@ export const CompanyPage = () => {
       return AlphaVantageService.getCompanyData(symbol);
     },
     enabled: !!symbol,
-    retry: false, // Don't retry on error
+    retry: false,
   });
 
-  // Handle errors with useEffect
+  // Fetch watchlist data on mount
+  useEffect(() => {
+    fetchWatchlist();
+  }, [fetchWatchlist]);
+
+  // Compute watchlist status
+  const isInWatchlist = items?.some((item) => item.symbol === symbol) ?? false;
+
+  // Handle watchlist toggle
+  const handleWatchlistToggle = async () => {
+    if (!symbol) return;
+
+    try {
+      if (isInWatchlist) {
+        await removeFromWatchlist(symbol);
+      } else {
+        await addToWatchlist(symbol);
+      }
+    } catch (error) {
+      console.error("Failed to update watchlist:", error);
+    }
+  };
+
+  // Handle errors
   useEffect(() => {
     if (error) {
       if (error instanceof Error && error.message.includes("rate limit")) {
@@ -68,7 +98,6 @@ export const CompanyPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Rest of your component remains the same */}
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -81,15 +110,15 @@ export const CompanyPage = () => {
         </div>
         <div className="flex gap-4">
           <Button
-            onClick={() => setIsSubscribed(!isSubscribed)}
-            variant={isSubscribed ? "outline" : "default"}
+            onClick={handleWatchlistToggle}
+            variant={isInWatchlist ? "outline" : "default"}
           >
-            {isSubscribed ? (
-              <BellOff className="mr-2 h-4 w-4" />
-            ) : (
-              <Bell className="mr-2 h-4 w-4" />
-            )}
-            {isSubscribed ? "Unsubscribe" : "Subscribe"}
+            <Star
+              className={cn("mr-2 h-4 w-4", {
+                "fill-current": isInWatchlist,
+              })}
+            />
+            {isInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
           </Button>
         </div>
       </div>
