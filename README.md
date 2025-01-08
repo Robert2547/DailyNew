@@ -12,7 +12,7 @@ Setup & Run
 Clone the repository
 
 bashCopygit clone [repository-url]
-cd stock-market-analytics
+cd DailyNews
 
 Environment Setup
 
@@ -68,12 +68,6 @@ Frontend: React, TypeScript, TailwindCSS, Shadcn UI
 Backend: FastAPI, PostgreSQL
 Infrastructure: Docker, Docker Compose
 
-API Documentation
-
-Auth Service: http://localhost:8001/docs
-User Service: http://localhost:8002/docs
-Watchlist Service: http://localhost:8003/docs
-
 Development
 Backend Services
 Each service runs in its own container and has its own PostgreSQL database:
@@ -81,39 +75,3 @@ Each service runs in its own container and has its own PostgreSQL database:
 AuthService: User authentication & authorization
 UserService: User profiles & preferences
 WatchlistService: Stock watchlist management
-
-Frontend Development
-The frontend is a React application with:
-
-TypeScript for type safety
-TailwindCSS for styling
-Shadcn UI for components
-React Query for data fetching
-Zustand for state management
-
-Troubleshooting
-Common Issues
-
-Database Connection Issues
-
-bashCopy# Check container status
-docker ps
-
-# View container logs
-
-docker logs [container-name]
-
-Port Conflicts
-
-bashCopy# Check ports in use
-lsof -i :[port-number]
-
-# Stop conflicting service or change port in .env
-
-Service Health Check
-bashCopy# Check all services
-docker-compose ps
-License
-MIT
-
-For more detailed documentation, refer to individual service READMEs.
