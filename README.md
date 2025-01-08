@@ -57,7 +57,8 @@ User: http://localhost:8002
 Watchlist: http://localhost:8003
 
 Project Structure
-Copy├── AuthService/ # Auth microservice (FastAPI)
+Copy
+├── AuthService/ # Auth microservice (FastAPI)
 ├── UserService/ # User microservice (FastAPI)
 ├── WatchlistService/ # Watchlist microservice (FastAPI)
 ├── frontend/ # React frontend
