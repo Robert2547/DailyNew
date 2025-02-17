@@ -1,24 +1,36 @@
-FROM python:3.9-slim
+# Build stage
+FROM python:3.9-slim AS builder
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+# Install build dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first
+# Copy and install requirements first
 COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
 
-# Install Python dependencies and verify uvicorn is installed
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip show uvicorn
+# Final stage
+FROM python:3.9-slim
 
-# Copy the rest of the application
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages from builder
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy application code
 COPY . .
 
-# Using python -m uvicorn
-ENTRYPOINT ["python", "-m", "uvicorn"]
-CMD ["main:app", "--host", "0.0.0.0", "--port", "8001"]
+# Run with reload for development
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]

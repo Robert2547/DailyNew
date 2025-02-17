@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchlist-service
+spec:
+  selector:
+    matchLabels:
+      app: watchlist-service
+  template:
+    metadata:
+      labels:
+        app: watchlist-service
+    spec:
+      containers:
+      - name: watchlist-service
+        image: watchlist-service
+        ports:
+        - containerPort: 8003
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_SERVER
+          value: "watchlist-db"
+        - name: POSTGRES_DB
+          value: "watchlist_db"
+        - name: AUTH_SERVICE_URL
+          value: "http://auth-service:8001"
+        - name: USER_SERVICE_URL
+          value: "http://user-service:8002"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: SECRET_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watchlist-service
+spec:
+  selector:
+    app: watchlist-service
+  ports:
+  - port: 8003
+    targetPort: 8003

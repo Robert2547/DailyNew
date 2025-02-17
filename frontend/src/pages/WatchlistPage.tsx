@@ -7,6 +7,14 @@ import {
   Trash2,
   Search,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,6 +37,12 @@ export const WatchlistPage = () => {
     removeFromWatchlist,
   } = useWatchlistStore();
 
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    stockSymbol: "",
+    stockName: "",
+  });
+
   // Wrap fetchWatchlist in useCallback
   const fetchWatchlistData = useCallback(() => {
     fetchWatchlist();
@@ -39,7 +53,20 @@ export const WatchlistPage = () => {
   }, [fetchWatchlistData]);
 
   const handleRemoveStock = async (symbol: string) => {
-    await removeFromWatchlist(symbol);
+    try {
+      await removeFromWatchlist(symbol);
+      setDeleteDialog({ isOpen: false, stockSymbol: "", stockName: "" });
+    } catch (error) {
+      console.error("Failed to remove stock:", error);
+    }
+  };
+
+  const openDeleteDialog = (symbol: string, name: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      stockSymbol: symbol,
+      stockName: name,
+    });
   };
 
   const handleStockClick = (symbol: string) => {
@@ -193,7 +220,7 @@ export const WatchlistPage = () => {
                       variant="ghost"
                       size="sm"
                       className="text-gray-400 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => handleRemoveStock(stock.symbol)}
+                      onClick={() => openDeleteDialog(stock.symbol, stock.name)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -204,6 +231,44 @@ export const WatchlistPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Confirm Delete Stock Waitlist Dialog */}
+      <Dialog
+        open={deleteDialog.isOpen}
+        onOpenChange={(open) =>
+          !open && setDeleteDialog((prev) => ({ ...prev, isOpen: false }))
+        }
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Stock from Watchlist</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove {deleteDialog.stockSymbol} from your watchlist? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 justify-end mt-4">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setDeleteDialog({
+                  isOpen: false,
+                  stockSymbol: "",
+                  stockName: "",
+                })
+              }
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleRemoveStock(deleteDialog.stockSymbol)}
+            >
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
