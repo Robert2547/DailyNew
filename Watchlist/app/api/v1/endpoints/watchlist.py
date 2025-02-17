@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.api import deps
+from app.db import base as deps
 from app.core.auth import get_current_user
 from app.schemas.watchlist import (
     WatchlistItemCreate,
@@ -9,16 +9,25 @@ from app.schemas.watchlist import (
 )
 from app.services.watchlist_services import WatchlistService
 from typing import List
+import logging
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
 
-@router.get("/", response_model=WatchlistResponse, summary="Get user's watchlist")
+
+@router.get("/", response_model=WatchlistResponse)
 async def get_watchlist(
     db: Session = Depends(deps.get_db), current_user: dict = Depends(get_current_user)
 ):
-    items = await WatchlistService.get_user_watchlist(db, current_user["id"])
-    return WatchlistResponse(items=items, total=len(items))
+    try:
+        items = await WatchlistService.get_user_watchlist(db, current_user["id"])
+        return WatchlistResponse(items=items, total=len(items))
+    except Exception as e:
+        logger.error(f"Watchlist error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching watchlist: {str(e)}"
+        )
 
 
 @router.post(

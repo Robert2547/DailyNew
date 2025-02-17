@@ -165,7 +165,7 @@ export const DashboardPage = () => {
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                         <span className="font-mono font-bold text-blue-600">
-                          {stock.symbol.slice(0, 2)}
+                          {stock.symbol?.slice(0, 2)}
                         </span>
                       </div>
                       <div>
@@ -175,20 +175,31 @@ export const DashboardPage = () => {
                     </div>
                     <div className="text-right">
                       <div className="font-mono font-medium">
-                        ${stock.price.toFixed(2)}
+                        $
+                        {typeof stock.price === "number"
+                          ? stock.price.toFixed(2)
+                          : "N/A"}
                       </div>
                       <div
                         className={`text-sm flex items-center justify-end ${
-                          stock.change >= 0 ? "text-green-600" : "text-red-600"
+                          (stock.change || 0) >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
                         }`}
                       >
-                        {stock.change >= 0 ? (
+                        {(stock.change || 0) >= 0 ? (
                           <TrendingUp className="h-3 w-3 mr-1" />
                         ) : (
                           <TrendingDown className="h-3 w-3 mr-1" />
                         )}
-                        {stock.changePercent > 0 ? "+" : ""}
-                        {stock.changePercent.toFixed(2)}%
+                        {typeof stock.changePercent === "number" ? (
+                          <>
+                            {stock.changePercent > 0 ? "+" : ""}
+                            {stock.changePercent.toFixed(2)}%
+                          </>
+                        ) : (
+                          "N/A"
+                        )}
                       </div>
                     </div>
                   </div>

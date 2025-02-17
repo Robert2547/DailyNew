@@ -162,20 +162,31 @@ export const WatchlistPage = () => {
                   <div className="flex items-center gap-8">
                     <div className="text-right min-w-[120px]">
                       <div className="font-mono font-medium text-lg">
-                        ${stock.price.toFixed(2)}
+                        $
+                        {typeof stock.price === "number"
+                          ? stock.price.toFixed(2)
+                          : "N/A"}
                       </div>
                       <div
                         className={`text-sm flex items-center justify-end font-medium ${
-                          stock.change >= 0 ? "text-green-600" : "text-red-600"
+                          (stock.change || 0) >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
                         }`}
                       >
-                        {stock.change >= 0 ? (
+                        {(stock.change || 0) >= 0 ? (
                           <TrendingUp className="h-3 w-3 mr-1" />
                         ) : (
                           <TrendingDown className="h-3 w-3 mr-1" />
                         )}
-                        {stock.changePercent > 0 ? "+" : ""}
-                        {stock.changePercent.toFixed(2)}%
+                        {typeof stock.changePercent === "number" ? (
+                          <>
+                            {stock.changePercent > 0 ? "+" : ""}
+                            {stock.changePercent.toFixed(2)}%
+                          </>
+                        ) : (
+                          "N/A"
+                        )}
                       </div>
                     </div>
                     <Button

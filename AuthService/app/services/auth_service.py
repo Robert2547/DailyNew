@@ -11,6 +11,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+
 class AuthService:
     @staticmethod
     async def create_user(db: Session, user_in: UserCreate) -> User:
@@ -22,16 +23,15 @@ class AuthService:
         if user_in.password != user_in.password_confirm:
             logger.warning("Password confirmation failed during signup")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Passwords do not match"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match"
             )
-        
+
         # Validate if user exists
         if await AuthService.get_user_by_email(db, user_in.email):
             logger.warning(f"Signup attempted with existing email: {user_in.email}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="The user with this email already exists"
+                detail="The user with this email already exists",
             )
 
         try:
@@ -42,16 +42,16 @@ class AuthService:
             db.add(user)
             db.commit()
             db.refresh(user)
-            
+
             logger.info(f"User created successfully with email: {user.email}")
             return user
-            
+
         except Exception as e:
             logger.error(f"Error during user creation: {str(e)}")
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="An error occurred while creating the user"
+                detail="An error occurred while creating the user",
             )
 
     @staticmethod
@@ -62,17 +62,16 @@ class AuthService:
     ) -> TokenResponse:
         """Authenticate user and create access token."""
         user = await AuthService.get_user_by_email(db, email)
-        
+
         if not user or not security.verify_password(password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+                detail="Incorrect email or password",
             )
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         token = security.create_access_token(
-            user.email,
-            expires_delta=access_token_expires
+            user.email, user_id=user.id, expires_delta=access_token_expires  # Add this
         )
 
         # Create token info record
@@ -85,10 +84,7 @@ class AuthService:
         db.add(token_info)
         db.commit()
 
-        return {
-            "access_token": token,
-            "token_type": "bearer"
-        }
+        return {"access_token": token, "token_type": "bearer"}
 
     @staticmethod
     async def get_user_by_email(db: Session, email: str) -> Optional[User]:

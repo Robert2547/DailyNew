@@ -1,12 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from app.core.config import DATABASE_URL
+from app.core.config import settings  # Import settings instead of DATABASE_URL
 import logging
 
 logger = logging.getLogger(__name__)
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(settings.get_database_url())
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

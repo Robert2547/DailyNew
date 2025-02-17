@@ -32,12 +32,12 @@ class Settings(BaseSettings):
     )
 
     # Service settings
-    AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "http://auth_service:8001")
-    USER_SERVICE_URL: str = os.getenv("USER_SERVICE_URL", "http://user_service:8002")
+    AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "http://localhost:8001")
+    USER_SERVICE_URL: str = os.getenv("USER_SERVICE_URL", "http://localhost:8002")
     AUTH_SERVICE_PORT: str = os.getenv("AUTH_SERVICE_PORT", "8001")
     USER_SERVICE_PORT: str = os.getenv("USER_SERVICE_PORT", "8002")
     WATCHLIST_SERVICE_PORT: str = os.getenv("WATCHLIST_SERVICE_PORT", "8003")
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "secret")
 
     # Database URL (constructed from components)
     DATABASE_URL: Optional[str] = None

@@ -22,6 +22,10 @@ export default defineConfig({
         target: "http://localhost:8002",
         changeOrigin: true,
       },
-    },
+      "/api/v1/watchlist": {
+        target: "http://localhost:8003",
+        changeOrigin: true,
+      }
+    }
   },
 });
