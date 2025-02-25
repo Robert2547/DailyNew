@@ -20,8 +20,10 @@ def get_database_url():
         logger.info("Using test database URL")
         return "postgresql://test_user:test_password@localhost:5437/user_test_db"
     
-    from app.core.config import settings
-    return settings.get_database_url()
+    database_url = os.getenv('DATABASE_URL')
+    if not database_url:
+        raise ValueError("DATABASE_URL environment variable is not set")
+    return database_url
 
 def init_db():
     """Initialize database engine and session factory."""

@@ -14,13 +14,11 @@ export interface WatchlistItem {
   added_at: string;
 }
 
-const BASE_URL = "http://localhost:8003/api/v1/watchlist";
+const BASE_URL = "http://127.0.0.1:8003/api/v1/watchlist";
 
 // Helper function to get auth headers with debug logging
 const getAuthHeaders = () => {
   const token = useAuthStore.getState().token;
-  console.log("Raw token value:", token);
-  console.log("Full Authorization header:", `Bearer ${token}`);
 
   if (!token) {
     console.warn("No auth token available in store");
@@ -37,11 +35,9 @@ const getAuthHeaders = () => {
 export const getWatchlist = async (): Promise<{ items: WatchlistItem[] }> => {
   try {
     const headers = getAuthHeaders();
-    console.log('Making request to:', BASE_URL);
-    console.log('With headers:', headers);
+
     
     const response = await axios.get(BASE_URL, headers);
-    console.log('Response:', response);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

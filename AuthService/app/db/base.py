@@ -21,10 +21,10 @@ def get_database_url():
             f"postgresql://{os.getenv('DB_USER', 'test_user')}:"
             f"{os.getenv('DB_PASSWORD', 'test_password')}@"
             f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
-            f"{os.getenv('AUTH_DB_PORT', '5436')}/"
-            f"{os.getenv('AUTH_DB_NAME', 'auth_test_db')}"
+            f"{os.getenv('DB_PORT', '5432')}/"
+            "DailyDB"  # Use the same DB name as in docker-compose
         )
-    return settings.get_database_url
+    return os.getenv('DATABASE_URL')
 
 def init_db():
     """Initialize database engine and session factory."""

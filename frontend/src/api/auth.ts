@@ -6,7 +6,7 @@ import {
   User,
 } from "../types";
 
-const AUTH_API_URL = "http://localhost:8001/api/v1/auth";
+const AUTH_API_URL = "http://127.0.0.1:8001/api/v1/auth";
 
 /**
  * Authentication API service

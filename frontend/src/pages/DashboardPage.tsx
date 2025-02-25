@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useWatchlistStore } from "@/store/watchlistStore";
 import { useEffect } from "react";
+import { useAuthStore } from "@/store/authStore";
 
 const mockNews = [
   {
@@ -64,6 +65,7 @@ const StatsCard = ({ title, value, trend, icon: Icon, trendColor }: any) => (
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const { items = [], isLoading, fetchWatchlist } = useWatchlistStore();
+  const { user } = useAuthStore();
 
   // Fetch watchlist data when component mounts
   useEffect(() => {
@@ -100,7 +102,7 @@ export const DashboardPage = () => {
     <>
       {/* Welcome Banner remains the same */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg shadow-lg p-6 mb-8 text-white">
-        <h1 className="text-3xl font-bold">Welcome back, John! 👋</h1>
+        <h1 className="text-3xl font-bold">Welcome back, {user?.email || "User!"} 👋</h1>
         <p className="mt-2 text-blue-50">
           Here's what's happening with your watched companies today
         </p>

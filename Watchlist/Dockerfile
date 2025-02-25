@@ -1,36 +1,19 @@
-# Build stage
-FROM python:3.9-slim AS builder
-
-WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy and install requirements first
-COPY requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
-
-# Final stage
 FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# The application code will be mounted as a volume during development
+# so we don't need to COPY it here
 
-# Run with reload for development
+# Command to run the application with hot-reload
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]

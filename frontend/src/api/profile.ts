@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Profile } from "../types";
 
-const USER_API_URL = "http://localhost:8002/api/v1/profiles";
+const USER_API_URL = "http://127.0.0.1:8002/api/v1/profiles";
 
 /**
  * Profile API service
