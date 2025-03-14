@@ -17,6 +17,18 @@ import {
 const API_KEY = import.meta.env.VITE_ALPHAVANTAGE_API_KEY;
 const BASE_URL = "https://www.alphavantage.co/query";
 
+// Add local caches to store results
+const searchCache = new Map<string, any>();
+const companyDataCache = new Map<
+  string,
+  { data: CompanyData; timestamp: number }
+>();
+const COMPANY_DATA_CACHE_TTL = 3600000; // 1 hour in milliseconds
+
+// Keep track of API calls to prevent rate limiting
+let lastAPICallTimestamp = 0;
+const MIN_API_CALL_INTERVAL = 12000; // 12 seconds between API calls
+
 const fetchFromAlphaVantage = async <T>(
   params: Record<string, string>
 ): Promise<AlphaVantageResponse<T>> => {
@@ -24,6 +36,21 @@ const fetchFromAlphaVantage = async <T>(
     function: params.function,
     params: { ...params, apikey: "***" },
   });
+
+  // Implement rate limiting
+  const now = Date.now();
+  if (now - lastAPICallTimestamp < MIN_API_CALL_INTERVAL) {
+    console.log(
+      `⚠️ Rate limiting in effect, skipping API call for: ${params.function}`
+    );
+    return {
+      data: null,
+      error: "Rate limiting in effect. Please try again in a moment.",
+      type: "RATE_LIMIT",
+    };
+  }
+
+  lastAPICallTimestamp = now;
 
   try {
     const queryParams = new URLSearchParams({
@@ -148,14 +175,27 @@ export const formatCurrency = (
 };
 
 /**
- * Fetches all necessary company data in the minimum number of API calls
- * Uses company overview data where possible to avoid redundant calls
+ * Fetches all necessary company data with caching
  */
 export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
+  const normalizedSymbol = symbol.toUpperCase();
+
+  // Check for cached data that isn't expired
+  const now = Date.now();
+  const cachedData = companyDataCache.get(normalizedSymbol);
+
+  if (cachedData && now - cachedData.timestamp < COMPANY_DATA_CACHE_TTL) {
+    console.log(`📦 Using cached company data for ${symbol}`);
+    return cachedData.data;
+  }
+
+  // If not in cache or expired, fetch from API
+  console.log(`🔄 Fetching company data for ${symbol}`);
+
   const { data: overview, error: overviewError } =
     await fetchFromAlphaVantage<CompanyOverview>({
       function: "OVERVIEW",
-      symbol,
+      symbol: normalizedSymbol,
     });
 
   if (overviewError || !overview) {
@@ -165,7 +205,7 @@ export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
   const { data: timeSeriesData, error: timeSeriesError } =
     await fetchFromAlphaVantage<TimeSeriesResponse>({
       function: "TIME_SERIES_DAILY",
-      symbol,
+      symbol: normalizedSymbol,
       outputsize: "compact",
     });
 
@@ -176,7 +216,7 @@ export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
   const { data: newsData, error: newsError } =
     await fetchFromAlphaVantage<NewsResponse>({
       function: "NEWS_SENTIMENT",
-      tickers: symbol,
+      tickers: normalizedSymbol,
       limit: "10",
     });
 
@@ -184,11 +224,20 @@ export const getCompanyData = async (symbol: string): Promise<CompanyData> => {
     throw new Error(newsError || "Failed to fetch news data");
   }
 
-  return {
+  // Prepare the result
+  const result = {
     overview,
     stockData: transformTimeSeriesData(timeSeriesData),
     news: transformNewsData(newsData),
   };
+
+  // Cache the result
+  companyDataCache.set(normalizedSymbol, {
+    data: result,
+    timestamp: now,
+  });
+
+  return result;
 };
 
 const transformTimeSeriesData = (
@@ -222,9 +271,21 @@ const transformNewsData = (data: NewsResponse): NewsItem[] => {
   }));
 };
 
+/**
+ * Enhanced company search with caching and rate limiting
+ */
 export const searchCompany = async (
   query: string
 ): Promise<AlphaVantageResponse<SearchResponse>> => {
+  // Normalize the query for cache lookup
+  const cacheKey = query.toLowerCase().trim();
+
+  // Check if we have cached results
+  if (searchCache.has(cacheKey)) {
+    console.log(`📦 Using cached search results for: ${query}`);
+    return { data: searchCache.get(cacheKey) };
+  }
+
   console.log(`🔄 AlphaVantage Search:`, {
     function: "SYMBOL_SEARCH",
     query,
@@ -237,22 +298,45 @@ export const searchCompany = async (
       apikey: API_KEY,
     });
 
+    // Check rate limiting
+    const now = Date.now();
+    if (now - lastAPICallTimestamp < MIN_API_CALL_INTERVAL) {
+      console.log(
+        `⚠️ Rate limiting in effect, skipping API call for search: ${query}`
+      );
+      return {
+        data: null,
+        error: "Rate limiting in effect. Please try again in a moment.",
+        type: "RATE_LIMIT",
+      };
+    }
+
+    lastAPICallTimestamp = now;
+
     const response = await fetch(`${BASE_URL}?${queryParams}`);
     const data = await response.json();
 
     if (data["Error Message"]) {
       throw new Error(data["Error Message"]);
     }
-    if (data["Note"]?.includes("API call frequency")) {
-      throw new Error("API rate limit exceeded");
+
+    if (isRateLimitResponse(data)) {
+      throw createRateLimitError();
+    }
+
+    // Cache the successful results
+    if (data && data.bestMatches) {
+      searchCache.set(cacheKey, data);
     }
 
     return { data };
   } catch (error) {
     console.error("❌ AlphaVantage Search Error:", error);
+    const apiError = handleApiError(error);
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: apiError.message,
+      type: apiError.type,
     };
   }
 };
@@ -269,3 +353,4 @@ export const transformSearchResults = (data: SearchResponse) => {
     matchScore: parseFloat(match["9. matchScore"]) || 0,
   }));
 };
+

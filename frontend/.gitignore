@@ -35,3 +35,13 @@ yarn-error.log*
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride

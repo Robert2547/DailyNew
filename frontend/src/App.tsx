@@ -28,11 +28,17 @@ const queryClient = new QueryClient({
         }
         return failureCount < 3;
       },
+      // Add staleTime to reduce unnecessary refetches
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      // Add gcTime to keep data in cache longer
+      gcTime: 30 * 60 * 1000, // 30 minutes
     },
   },
 });
 
 function App() {
+  // No prefetching implementation
+
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster

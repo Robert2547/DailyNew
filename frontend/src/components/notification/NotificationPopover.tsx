@@ -18,12 +18,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 type NotificationTypeKey = 'PRICE_UP' | 'PRICE_DOWN' | 'NEWS' | 'MARKET' | 'ALERT';
 
-interface NotificationType {
-  icon: React.ElementType;
-  bgColor: string;
-  iconColor: string;
-  borderColor: string;
-}
 
 interface Notification {
   id: number;

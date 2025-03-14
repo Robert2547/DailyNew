@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -41,6 +41,9 @@ const REGIONS_MAP: { [key: string]: string } = {
   Japan: "🇯🇵",
 };
 
+// Create a cache for search results
+const searchCache = new Map<string, SearchResult[]>();
+
 export const TickerSearch = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -48,8 +51,11 @@ export const TickerSearch = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [lastApiCallTime, setLastApiCallTime] = useState(0);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  // Increase debounce delay to reduce API calls
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   const performSearch = useCallback(
     async (query: string) => {
@@ -59,39 +65,57 @@ export const TickerSearch = () => {
         return;
       }
 
+      // Check if we have results in cache
+      if (searchCache.has(query.toLowerCase())) {
+        setResults(searchCache.get(query.toLowerCase()) || []);
+        setIsLoading(false);
+        return;
+      }
+
+      // Rate limiting: only call API if enough time has passed
+      const now = Date.now();
+      if (now - lastApiCallTime < 12000) {
+        // 12 seconds between API calls
+        if (searchTimeoutRef.current) {
+          clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+          performSearch(query);
+        }, 12000 - (now - lastApiCallTime));
+
+        return;
+      }
+
       setIsLoading(true);
       try {
+        setLastApiCallTime(Date.now());
         const { data, error } = await AlphaVantageService.searchCompany(
           query.trim()
         );
 
-        console.log("Search results:", data);
-
         if (error || !data?.bestMatches || data.bestMatches.length === 0) {
-          const message =
-            "Search rate limit reached. Please try again later or upgrade your subscription.";
-          toast.error(message, {
-            icon: "⚠️",
-            duration: 4000,
-          });
-          setTimeout(() => {
-            navigate("/error", {
-              state: {
-                type: "RATE_LIMIT",
-                message,
-              },
-            });
-          }, 200);
-          return;
-        }
-
-        if (data) {
+          // Check if it's a rate limit error
+          if (error?.includes("rate limit")) {
+            toast.error(
+              "Search rate limit reached. Please try again in a few minutes.",
+              {
+                icon: "⚠️",
+                duration: 4000,
+              }
+            );
+          } else {
+            // For no results, just set empty results without an error
+            setResults([]);
+          }
+        } else if (data) {
           const transformedResults =
             AlphaVantageService.transformSearchResults(data);
           setResults(transformedResults);
           setSelectedIndex(0);
-        } else {
-          setResults([]);
+
+          // Store in cache
+          searchCache.set(query.toLowerCase(), transformedResults);
         }
       } catch (error) {
         console.error("Search error:", error);
@@ -99,22 +123,45 @@ export const TickerSearch = () => {
           icon: "❌",
           duration: 3000,
         });
-        setResults([]);
       } finally {
         setIsLoading(false);
       }
     },
-    [navigate]
+    [lastApiCallTime]
   );
 
   useEffect(() => {
-    performSearch(debouncedSearch);
+    if (debouncedSearch) {
+      performSearch(debouncedSearch);
+    } else {
+      setResults([]);
+    }
   }, [debouncedSearch, performSearch]);
 
   const handleSelect = (symbol: string) => {
     setOpen(false);
     setSearchQuery("");
     navigate(`/company/${symbol}`);
+  };
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!results.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prevIndex) =>
+        prevIndex < results.length - 1 ? prevIndex + 1 : prevIndex
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (results[selectedIndex]) {
+        handleSelect(results[selectedIndex].symbol);
+      }
+    }
   };
 
   useEffect(() => {
@@ -126,7 +173,13 @@ export const TickerSearch = () => {
     };
 
     document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
+    return () => {
+      document.removeEventListener("keydown", down);
+      // Clear any pending timeouts when component unmounts
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -160,6 +213,7 @@ export const TickerSearch = () => {
               placeholder="Search companies or tickers..."
               value={searchQuery}
               onValueChange={setSearchQuery}
+              onKeyDown={handleKeyDown}
               className="border-none focus:ring-0"
             />
             {searchQuery && !isLoading && (
