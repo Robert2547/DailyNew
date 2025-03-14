@@ -1,7 +1,11 @@
-// authStore.ts
+// authStore.ts with improved logout
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { User } from "../types";
+
+// Import the store clear functions
+import { clearWatchlistCache } from "./watchlistStore";
+import { clearAlphavantageCache } from "../services/alphavantage";
 
 interface AuthState {
   user: User | null;
@@ -20,7 +24,14 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set({ user }),
       setToken: (token) => set({ token }),
       setAuth: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
+      logout: () => {
+        // Clear all user-specific data from stores
+        clearWatchlistCache();
+        clearAlphavantageCache();
+
+        // Then clear the auth state
+        set({ user: null, token: null });
+      },
     }),
     {
       name: "auth-storage",

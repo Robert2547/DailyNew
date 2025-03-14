@@ -1,4 +1,3 @@
-// src/components/layout/Navbar.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,9 +11,24 @@ export const Navbar = () => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
-    logout();
-    toast.success("Logged out successfully");
-    navigate("/login");
+    // Show a loading toast
+    const loadingToast = toast.loading("Logging out...");
+
+    try {
+      // Call the enhanced logout function that will clear all caches
+      logout();
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success("Logged out successfully");
+
+      // Navigate back to login page
+      navigate("/login");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast.dismiss(loadingToast);
+      toast.error("Failed to log out properly");
+    }
   };
 
   return (

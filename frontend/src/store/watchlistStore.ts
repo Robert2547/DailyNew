@@ -11,12 +11,14 @@ interface WatchlistState {
   fetchWatchlist: () => Promise<void>;
   addToWatchlist: (symbol: string) => Promise<void>;
   removeFromWatchlist: (symbol: string) => Promise<void>;
+  clearCache: () => void;
 }
 
 // Cache time in milliseconds (5 minutes)
 const CACHE_TTL = 5 * 60 * 1000;
 
-export const useWatchlistStore = create<WatchlistState>((set, get) => ({
+// Create the store with a reference we can use outside of components
+const useWatchlistStore = create<WatchlistState>((set, get) => ({
   items: [],
   isLoading: false,
   error: null,
@@ -114,4 +116,21 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
       set({ isLoading: false });
     }
   },
+
+  clearCache: () => {
+    console.debug("Clearing watchlist cache");
+    set({
+      items: [],
+      isLoading: false,
+      error: null,
+      lastFetchTime: 0,
+    });
+  },
 }));
+
+// Export a function to clear the cache from outside the component context
+export const clearWatchlistCache = () => {
+  useWatchlistStore.getState().clearCache();
+};
+
+export { useWatchlistStore };

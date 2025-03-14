@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -9,6 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import { useWatchlistStore } from "@/store/watchlistStore";
 import { DashboardWatchlist } from "@/components/dashboard/watchlist";
 
 const mockNews = [
@@ -35,7 +37,21 @@ const mockNews = [
   },
 ];
 
-const StatsCard = ({ title, value, trend, icon: Icon, trendColor }: any) => (
+interface StatsCardProps {
+  title: string;
+  value: string | number;
+  trend: number;
+  icon: React.ElementType;
+  trendColor: string;
+}
+
+const StatsCard = ({
+  title,
+  value,
+  trend,
+  icon: Icon,
+  trendColor,
+}: StatsCardProps) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between pb-2">
       <CardTitle className="text-sm font-medium text-gray-500">
@@ -58,24 +74,71 @@ const StatsCard = ({ title, value, trend, icon: Icon, trendColor }: any) => (
   </Card>
 );
 
+// Count news items from the last 24 hours
+const countRecentNews = (news: any[]) => {
+  const oneDayAgo = new Date();
+  oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+
+  return news.filter((item) => {
+    const timeText = item.time;
+    if (timeText.includes("h ago")) {
+      const hours = parseInt(timeText);
+      return hours <= 24;
+    }
+    return false;
+  }).length;
+};
+
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { items = [], fetchWatchlist } = useWatchlistStore();
+  const [recentNewsCount, setRecentNewsCount] = useState(0);
+
+  // Fetch watchlist on component mount
+  useEffect(() => {
+    fetchWatchlist();
+
+    // Count recent news
+    // TODO: fetch the actual news timestamps
+    setRecentNewsCount(countRecentNews(mockNews));
+  }, [fetchWatchlist]);
+
+  // Calculate the previous count for trend
+  const previousWatchlistCount = Math.max(
+    1,
+    items.length - Math.ceil(items.length * 0.1)
+  );
+  const watchlistTrend =
+    items.length > 0
+      ? Math.round(
+          ((items.length - previousWatchlistCount) / previousWatchlistCount) *
+            100
+        )
+      : 0;
+
+  const previousNewsCount = Math.max(1, recentNewsCount - 1);
+  const newsTrend =
+    recentNewsCount > 0
+      ? Math.round(
+          ((recentNewsCount - previousNewsCount) / previousNewsCount) * 100
+        )
+      : 0;
 
   const stats = [
     {
       title: "Tracked Companies",
-      value: "12",
-      trend: 2,
+      value: items.length,
+      trend: watchlistTrend,
       icon: Eye,
-      trendColor: "text-green-500",
+      trendColor: watchlistTrend >= 0 ? "text-green-500" : "text-red-500",
     },
     {
       title: "Today's News",
-      value: "89",
-      trend: 14,
+      value: recentNewsCount,
+      trend: newsTrend,
       icon: Newspaper,
-      trendColor: "text-green-500",
+      trendColor: newsTrend >= 0 ? "text-green-500" : "text-red-500",
     },
     {
       title: "Market Sentiment",

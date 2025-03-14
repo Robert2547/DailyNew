@@ -354,3 +354,13 @@ export const transformSearchResults = (data: SearchResponse) => {
   }));
 };
 
+/**
+ * Clear all cached data from the AlphaVantage service
+ * This should be called when a user logs out
+ */
+export const clearAlphavantageCache = () => {
+  console.log("🧹 Clearing AlphaVantage cache");
+  searchCache.clear();
+  companyDataCache.clear();
+  lastAPICallTimestamp = 0;
+};
